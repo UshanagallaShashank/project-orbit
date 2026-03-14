@@ -1,0 +1,18 @@
+# Requires Python 3.10+
+# Web framework + server
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# Google ADK — agent framework with LiveRequestQueue and run_live()
+# google-genai unpinned — ADK pulls the version it needs
+google-adk>=0.5.0
+google-genai>=1.12.1
+
+# Supabase — Postgres + Storage client
+supabase>=2.3.0
+
+# Env vars in local dev
+python-dotenv>=1.0.0
+
+# MCP protocol — each mcp_server uses this
+mcp>=1.2.0
