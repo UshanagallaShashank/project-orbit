@@ -6,3 +6,4 @@ google-auth-oauthlib>=1.2.0
 uvicorn[standard]>=0.29.0
 python-dotenv>=1.0.0
 aiosqlite>=0.20.0
+ddgs>=0.1.0

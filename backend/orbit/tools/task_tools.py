@@ -87,8 +87,8 @@ def update_task(
     task_id: str,
     title: str = "",
     description: str = "",
-    status: Literal["open", "in_progress", "done", ""] = "",
-    priority: Literal["low", "medium", "high", ""] = "",
+    status: str = "",
+    priority: str = "",
     due_date: str = "",
 ) -> dict:
     """Update fields on an existing task. Only provided (non-empty) fields are changed.

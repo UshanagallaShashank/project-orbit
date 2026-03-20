@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Model ---
+# For text-only: gemini-2.0-flash or gemini-2.5-flash
+# For live audio dialog: gemini-2.0-flash-live-001 or gemini-2.5-flash-preview-native-audio-dialog
 MODEL = os.getenv("MODEL", "gemini-2.0-flash")
 
 # --- Google AI ---
