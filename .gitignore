@@ -1,0 +1,86 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Frontend (React/Vite)
+client/node_modules/
+client/dist/
+client/.vite/
+client/.turbo/
+client/coverage/
+client/*.tsbuildinfo
+
+# Backend (Python)
+server/__pycache__/
+server/*.py[cod]
+server/*$py.class
+server/*.so
+server/.Python
+server/build/
+server/develop-eggs/
+server/dist/
+server/downloads/
+server/eggs/
+server/.eggs/
+server/lib/
+server/lib64/
+server/parts/
+server/sdist/
+server/var/
+server/wheels/
+server/pip-wheel-metadata/
+server/share/python-wheels/
+server/*.egg-info/
+server/.installed.cfg
+server/*.egg
+server/MANIFEST
+server/.pytest_cache/
+server/.coverage
+server/htmlcov/
+server/.tox/
+server/.nox/
+server/.hypothesis/
+server/venv/
+server/ENV/
+server/env/
+server/.venv
+server/.mypy_cache/
+server/.dmypy.json
+server/dmypy.json
+server/.pyre/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Miscellaneous
+.cache/
+.next/
+out/
+*.pem
