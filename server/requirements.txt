@@ -1,0 +1,28 @@
+# Web framework
+fastapi==0.115.0
+uvicorn==0.30.6
+
+# AI
+langchain==0.3.0
+langchain-google-genai==2.0.0
+langchain-core==0.3.0
+
+# Database
+supabase==2.7.0
+
+# Auth
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Validation (already included in FastAPI, listed for clarity)
+pydantic==2.9.0
+pydantic-settings==2.5.0
+
+# Environment variables
+python-dotenv==1.0.1
+
+# Testing
+pytest==8.3.0
+pytest-asyncio==0.24.0
+pytest-mock==3.14.0
+httpx==0.27.0        # needed to test FastAPI with TestClient
