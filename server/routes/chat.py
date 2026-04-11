@@ -18,6 +18,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from middleware import get_current_user
 from agents import orchestrator_agent as orchestrator
+from agents import task_agent as task
 
 router = APIRouter()
 
@@ -34,8 +35,11 @@ async def chat(agent_name: str, body: ChatRequest, user=Depends(get_current_user
             media_type="text/plain",
         )
 
+    elif agent_name == "task":
+        return task.run(user_id=user["id"], message=body.message)
+
     # Add more agents here as you build them:
-    # elif agent_name == "task":
-    #     return task.run(user_id=user["id"], message=body.message)
+    # elif agent_name == "tracker":
+    #     return tracker.run(user_id=user["id"], message=body.message)
 
     raise HTTPException(status_code=404, detail=f"Agent '{agent_name}' not found")
