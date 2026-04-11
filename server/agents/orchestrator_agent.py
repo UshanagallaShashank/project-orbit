@@ -1,14 +1,14 @@
-# agents/orchestrator.py — The AI Brain
-# ────────────────────────────────────────
+# agents/orchestrator_agent.py — The AI Brain
+# ─────────────────────────────────────────────
 # ONE job: take user message + history → ask Gemini → save → return reply.
 #
-# Shared DB logic (get_history, save_messages, summarize) lives in base.py.
+# Shared DB logic (get_history, save_messages, summarize) lives in utils/.
 # This file only owns: the LLM, the prompt, and the run logic.
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from config import settings
-from prompts.orchestrator import SYSTEM_PROMPT
+from prompts.orchestrator_prompt import SYSTEM_PROMPT
 from utils.history import get_history, save_messages
 from utils.summarize import maybe_summarize
 

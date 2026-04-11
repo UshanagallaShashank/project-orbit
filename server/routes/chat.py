@@ -17,7 +17,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from middleware import get_current_user
-from agents import orchestrator
+from agents import orchestrator_agent as orchestrator
 
 router = APIRouter()
 
