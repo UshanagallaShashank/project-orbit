@@ -1,5 +1,5 @@
-# utils/summarize.py — compress history when it exceeds the threshold
-# ─────────────────────────────────────────────────────────────────────
+# utils/summarize.py - compress history when it exceeds the threshold
+# ---------------------------------------------------------------------
 # Only triggers when message count >= SUMMARY_THRESHOLD.
 # Runs in a background thread so the user never waits for it.
 # A lock per user+agent prevents two threads from summarizing at the same time.
@@ -9,7 +9,7 @@ import threading
 from config import supabase
 from utils.history import SUMMARY_THRESHOLD
 
-# One lock per user+agent — prevents race condition when messages arrive fast
+# One lock per user+agent - prevents race condition when messages arrive fast
 _locks: dict[str, threading.Lock] = {}
 _locks_mutex = threading.Lock()
 
@@ -24,7 +24,7 @@ def _get_lock(user_id: str, agent: str) -> threading.Lock:
 
 def _run(user_id: str, agent: str, llm):
     lock = _get_lock(user_id, agent)
-    if not lock.acquire(blocking=False):   # already summarizing → skip
+    if not lock.acquire(blocking=False):   # already summarizing -> skip
         return
     try:
         res = (
@@ -67,7 +67,7 @@ def _run(user_id: str, agent: str, llm):
         result  = llm.invoke(prompt)
         summary = f"[PAST CONVERSATION SUMMARY]\n{result.content}"
 
-        # Delete ALL exchanges + old summary → replace with only the summary
+        # Delete ALL exchanges + old summary -> replace with only the summary
         supabase.table("messages").delete() \
             .eq("user_id", user_id).eq("agent", agent) \
             .eq("role", "exchange").execute()

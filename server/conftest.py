@@ -1,5 +1,5 @@
-# conftest.py — pytest configuration for the server
-# ────────────────────────────────────────────────────
+# conftest.py - pytest configuration for the server
+# ----------------------------------------------------
 # Adds the server/ directory to sys.path so that imports like
 # `from agents.task_agent import run` work inside tests/.
 #

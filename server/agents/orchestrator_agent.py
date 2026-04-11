@@ -1,48 +1,96 @@
-# agents/orchestrator_agent.py — The AI Brain
-# ─────────────────────────────────────────────
-# ONE job: take user message + history → ask Gemini → save → return reply.
+# agents/orchestrator_agent.py - The Router
+# ------------------------------------------
+# This is the ONLY agent the frontend talks to.
 #
-# Shared DB logic (get_history, save_messages, summarize) lives in utils/.
-# This file only owns: the LLM, the prompt, and the run logic.
+# Flow:
+#   message  router_chain classifies intent -> delegate to right agent
+#
+# WHY two chains?
+#   router_chain:  fast, no history, just classifies
+#   general_chain: full history, handles casual chat when no specialist needed
+#
+# To add a new agent: import it and add one line to _ROUTES.
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from typing import Literal
+from pydantic import BaseModel
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from config import settings
+
+from agents.agent_factory import make_llm, make_chain, make_tool_schema, run_plain_agent
+from prompts.router_prompt import ROUTER_PROMPT
 from prompts.orchestrator_prompt import SYSTEM_PROMPT
-from utils.history import get_history, save_messages
-from utils.summarize import maybe_summarize
+
+from agents import data_agent
+from agents import mentor_agent
 
 AGENT = "orchestrator"
 
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash-lite", google_api_key=settings.GOOGLE_API_KEY)
 
-prompt = ChatPromptTemplate.from_messages([
+# -- Router chain --------------------------------------------------------------
+
+class RouteDecision(BaseModel):
+    agent: Literal["task", "mentor", "tracker", "comms", "memory", "job", "resume", "mock", "general"]
+
+ROUTER_TOOL_SCHEMA = make_tool_schema(
+    name="RouteDecision",
+    description="Classify the user message to the correct agent.",
+    extra_properties={
+        "agent": {
+            "type": "string",
+            "enum": ["task", "mentor", "tracker", "comms", "memory", "job", "resume", "mock", "general"],
+            "description": "Which agent should handle this message.",
+        }
+    },
+)
+
+# Router doesn't need message history - just the current message
+_router_llm    = make_llm()
+_router_prompt = ChatPromptTemplate.from_messages([
+    ("system", ROUTER_PROMPT),
+    ("human", "{input}"),
+])
+_router_chain = make_chain(_router_prompt, _router_llm, RouteDecision, ROUTER_TOOL_SCHEMA)
+
+
+# -- General chat chain --------------------------------------------------------
+
+_general_llm    = make_llm()
+_general_prompt = ChatPromptTemplate.from_messages([
     ("system", SYSTEM_PROMPT),
     MessagesPlaceholder("history"),
     ("human", "{input}"),
 ])
+_general_chain = _general_prompt | _general_llm
 
-chain = prompt | llm
 
+# -- Routing table -------------------------------------------------------------
+# Add one line here when each new agent is built.
+
+_ROUTES = {
+    # task + tracker + memory are unified - data_agent handles all 3 in one call
+    "task":    data_agent.run,
+    "tracker": data_agent.run,
+    "memory":  data_agent.run,
+    "mentor":  mentor_agent.run,
+    # "comms":   comms_agent.run,   <- future
+    # "job":     job_agent.run,     <- future
+    # "resume":  resume_agent.run,  <- future
+    # "mock":    mock_agent.run,    <- future
+}
+
+
+# -- Public API ----------------------------------------------------------------
 
 def run(user_id: str, message: str) -> dict:
-    history, count = get_history(user_id, AGENT)
-    reply = chain.invoke({"history": history, "input": message}).content
-    save_messages(user_id, AGENT, message, reply)
-    maybe_summarize(user_id, AGENT, count + 1, llm)   # +1 includes the message just saved
-    return {"reply": reply}
+    # Step 1: classify
+    decision: RouteDecision = _router_chain.invoke({"input": message})
 
+    # Step 2: delegate
+    handler = _ROUTES.get(decision.agent)
 
-async def run_stream(user_id: str, message: str):
-    history, count = get_history(user_id, AGENT)
-    full_reply = []
+    if handler:
+        result = handler(user_id=user_id, message=message)
+    else:
+        result = run_plain_agent(user_id, AGENT, message, _general_chain, _general_llm)
 
-    async for chunk in chain.astream({"history": history, "input": message}):
-        token = chunk.content
-        if token:
-            full_reply.append(token)
-            yield token
-
-    reply = "".join(full_reply)
-    save_messages(user_id, AGENT, message, reply)
-    maybe_summarize(user_id, AGENT, count + 1, llm)   # +1 includes the message just saved
+    result["agent_used"] = decision.agent
+    return result

@@ -1,45 +1,29 @@
-# routes/chat.py — The Agent Router
-# ───────────────────────────────────
-# ONE job: receive chat requests and send them to the right agent.
+# routes/chat.py - Single chat endpoint
+# ---------------------------------------
+# ONE URL for all messages: POST /api/chat
 #
-# Single URL handles all agents:
-#   POST /api/chat/orchestrator  → runs OrchestratorAgent
-#   POST /api/chat/task          → runs TaskAgent (not built yet)
-#   POST /api/chat/mentor        → runs MentorAgent (not built yet)
+# The orchestrator handles routing internally:
+#   "remind me to buy milk" -> task_agent
+#   "how do I get promoted?" -> mentor_agent
+#   "hey how are you?" -> general chat
 #
-# WHY one route for all agents?
-#   Cleaner. Adding a new agent = one new elif line here + one new file in agents/.
-#
-# user=Depends(get_current_user) means:
-#   Run middleware.py first. If token invalid → stop. If valid → user = { id, email }
+# The response always includes "agent_used" so the frontend
+# knows which agent handled it and what fields to expect:
+#   { reply, agent_used: "task", tasks: [...] }
+#   { reply, agent_used: "general" }
 
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from middleware import get_current_user
 from agents import orchestrator_agent as orchestrator
-from agents import task_agent as task
 
 router = APIRouter()
 
 
 class ChatRequest(BaseModel):
-    message: str   # what the user typed
+    message: str
 
 
-@router.post("/{agent_name}")
-async def chat(agent_name: str, body: ChatRequest, user=Depends(get_current_user)):
-    if agent_name == "orchestrator":
-        return StreamingResponse(
-            orchestrator.run_stream(user_id=user["id"], message=body.message),
-            media_type="text/plain",
-        )
-
-    elif agent_name == "task":
-        return task.run(user_id=user["id"], message=body.message)
-
-    # Add more agents here as you build them:
-    # elif agent_name == "tracker":
-    #     return tracker.run(user_id=user["id"], message=body.message)
-
-    raise HTTPException(status_code=404, detail=f"Agent '{agent_name}' not found")
+@router.post("")
+def chat(body: ChatRequest, user=Depends(get_current_user)):
+    return orchestrator.run(user_id=user["id"], message=body.message)

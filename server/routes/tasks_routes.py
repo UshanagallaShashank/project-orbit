@@ -1,8 +1,8 @@
-# routes/tasks_routes.py — Task CRUD endpoints
-# ──────────────────────────────────────────────
+# routes/tasks_routes.py - Task CRUD endpoints
+# ----------------------------------------------
 # Endpoints:
-#   GET  /api/tasks        → list all tasks for the logged-in user
-#   PATCH /api/tasks/{id}  → mark a task done/undone
+#   GET  /api/tasks        -> list all tasks for the logged-in user
+#   PATCH /api/tasks/{id}  -> mark a task done/undone
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel

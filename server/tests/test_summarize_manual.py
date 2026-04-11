@@ -1,33 +1,33 @@
 # tests/test_summarize_manual.py
-# ─────────────────────────────────────────────────────
+# -----------------------------------------------------
 # Manual test: sends 11 messages and checks if summary was created.
 #
 # HOW TO RUN:
 #   1. Start the server:  uvicorn main:app --reload
 #   2. Run this script:   python tests/test_summarize_manual.py
-#   3. Check Supabase:    Table "messages" → look for role = "summary"
+#   3. Check Supabase:    Table "messages" -> look for role = "summary"
 
 import httpx
 import time
 
 BASE_URL = "http://localhost:8000"
-EMAIL    = "test@gmail.com"       # ← change to your test account
-PASSWORD = "test123"          # ← change to your test password
+EMAIL    = "test@gmail.com"       # <- change to your test account
+PASSWORD = "test123"          # <- change to your test password
 
-# ── Step 1: Login ─────────────────────────────────────
+# -- Step 1: Login -------------------------------------
 print("Logging in...")
 res = httpx.post(f"{BASE_URL}/api/auth/login", json={"email": EMAIL, "password": PASSWORD})
 
 if res.status_code != 200:
     print(f"Login failed: {res.text}")
-    print("Tip: Register first at http://localhost:8000/docs → /api/auth/register")
+    print("Tip: Register first at http://localhost:8000/docs -> /api/auth/register")
     exit(1)
 
 token = res.json()["access_token"]
 headers = {"Authorization": f"Bearer {token}"}
 print(f"Logged in!\n")
 
-# ── Step 2: Send 10 messages ──────────────────────────
+# -- Step 2: Send 10 messages --------------------------
 questions = [
     "What is the difference between RAG and fine-tuning?",
     "When should I use a vector database?",
@@ -49,11 +49,11 @@ for i, q in enumerate(questions, 1):
         headers=headers,
         timeout=30,
     )
-    print(f"  [{i}/10] '{q[:40]}' → {res.status_code}")
+    print(f"  [{i}/10] '{q[:40]}' -> {res.status_code}")
     time.sleep(0.5)   # small delay to avoid rate limiting
 
-# ── Step 3: Send the 11th message ─────────────────────
-print(f"\nSending message 11 — this should trigger summarization...")
+# -- Step 3: Send the 11th message ---------------------
+print(f"\nSending message 11 - this should trigger summarization...")
 res = httpx.post(
     f"{BASE_URL}/api/chat/orchestrator",
     json={"message": "Based on everything we discussed, what should I focus on next for Orbit?"},
@@ -62,7 +62,7 @@ res = httpx.post(
 )
 print(f"Reply: {res.text}\n")
 
-# ── Step 4: Instructions ───────────────────────────────
+# -- Step 4: Instructions -------------------------------
 print("=" * 55)
 print("NOW CHECK SUPABASE:")
 print("  Table: messages")

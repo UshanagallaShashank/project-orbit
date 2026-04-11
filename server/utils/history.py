@@ -1,5 +1,5 @@
-# utils/history.py — fetch and save conversation history
-# ─────────────────────────────────────────────────────────
+# utils/history.py - fetch and save conversation history
+# ---------------------------------------------------------
 # Saves each exchange (user + AI) as ONE row with JSON content:
 #   { "user": "hello", "assistant": "Hi there!" }
 #
@@ -31,7 +31,7 @@ def get_history(user_id: str, agent: str) -> tuple[list, int]:
     if summary_rows:
         history.append(AIMessage(content=summary_rows[-1]["content"]))
 
-    # Each exchange row holds both sides — unpack into 2 LangChain messages
+    # Each exchange row holds both sides - unpack into 2 LangChain messages
     for row in exchanges[-SUMMARY_THRESHOLD:]:
         pair = json.loads(row["content"])
         history.append(HumanMessage(content=pair["user"]))

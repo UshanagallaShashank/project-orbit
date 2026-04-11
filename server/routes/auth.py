@@ -1,10 +1,10 @@
-# routes/auth.py — Login & Register
-# ──────────────────────────────────
+# routes/auth.py - Login & Register
+# ----------------------------------
 # ONE job: handle user accounts.
 #
 # Two routes:
-#   POST /api/auth/register  → creates a new account, returns JWT token
-#   POST /api/auth/login     → checks credentials, returns JWT token
+#   POST /api/auth/register  -> creates a new account, returns JWT token
+#   POST /api/auth/login     -> checks credentials, returns JWT token
 #
 # WHY call Supabase directly with httpx (not the SDK)?
 #   The Supabase Python SDK had bugs with email confirmation.
@@ -12,7 +12,7 @@
 #
 # What is a JWT token?
 #   A string that proves "I am logged in". Frontend stores it and sends it
-#   on every request. Like a wristband at a concert — show it to get in.
+#   on every request. Like a wristband at a concert - show it to get in.
 
 from fastapi import APIRouter, HTTPException, Form
 from pydantic import BaseModel, EmailStr
@@ -22,13 +22,13 @@ from config import settings
 router = APIRouter()
 
 
-# Request shape — what the frontend must send
+# Request shape - what the frontend must send
 class AuthBody(BaseModel):
     email: EmailStr   # validates it's a real email format
     password: str
 
 
-# Response shape — what we send back
+# Response shape - what we send back
 class AuthResponse(BaseModel):
     access_token: str       # the JWT token
     token_type: str = "bearer"
@@ -37,7 +37,7 @@ class AuthResponse(BaseModel):
 
 
 def _login(email: str, password: str) -> AuthResponse:
-    # Private helper — called by both /login and /login/form
+    # Private helper - called by both /login and /login/form
     res = httpx.post(
         f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=password",
         json={"email": email, "password": password},
@@ -64,7 +64,7 @@ def register(body: AuthBody):
     if res.status_code != 200:
         raise HTTPException(status_code=400, detail=data.get("msg", "Registration failed"))
     if not data.get("access_token"):
-        raise HTTPException(status_code=400, detail="Disable email confirmation: Supabase → Auth → Settings → Confirm email OFF")
+        raise HTTPException(status_code=400, detail="Disable email confirmation: Supabase -> Auth -> Settings -> Confirm email OFF")
     return AuthResponse(
         access_token=data["access_token"],
         user_id=data["user"]["id"],
@@ -77,7 +77,7 @@ def login(body: AuthBody):
     return _login(body.email, body.password)
 
 
-# Swagger's Authorize button sends form data (not JSON) — this handles that
+# Swagger's Authorize button sends form data (not JSON) - this handles that
 @router.post("/login/form", response_model=AuthResponse)
 def login_form(username: str = Form(...), password: str = Form(...)):
     return _login(username, password)   # username = email in Swagger's form
