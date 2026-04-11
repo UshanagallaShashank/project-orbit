@@ -28,8 +28,8 @@ chain = prompt | llm
 def run(user_id: str, message: str) -> dict:
     history, count = get_history(user_id, AGENT)
     reply = chain.invoke({"history": history, "input": message}).content
-    maybe_summarize(user_id, AGENT, count, llm)
     save_messages(user_id, AGENT, message, reply)
+    maybe_summarize(user_id, AGENT, count + 1, llm)   # +1 includes the message just saved
     return {"reply": reply}
 
 
@@ -44,5 +44,5 @@ async def run_stream(user_id: str, message: str):
             yield token
 
     reply = "".join(full_reply)
-    maybe_summarize(user_id, AGENT, count, llm)
     save_messages(user_id, AGENT, message, reply)
+    maybe_summarize(user_id, AGENT, count + 1, llm)   # +1 includes the message just saved
