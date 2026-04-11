@@ -1,33 +1,37 @@
+# main.py — The Entry Point
+# ──────────────────────────
+# ONE job: create the FastAPI app, attach middleware, register routes.
+# This is the file uvicorn runs. Everything starts here.
+#
+# Request flow:
+#   Browser → CORS check → route handler → response
+#
+# WHY CORS?
+#   Browsers block requests from different ports by default.
+#   React runs on :5173, backend on :8000 → browser blocks it.
+#   CORSMiddleware tells the browser "it's okay, allow :5173".
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.auth import router as auth_router
+from routes.chat import router as chat_router
 
-app = FastAPI(
-    title="Project Orbit API",
-    description="Personal AI OS — 5 specialized agents",
-    version="0.1.0",
-    # /docs → Swagger UI (interactive API tester, replaces Postman)
-    # /redoc → alternative docs view
-)
+app = FastAPI(title="Project Orbit")
 
-# CORS — allows the React frontend to call this backend
-# WHY: browsers block cross-origin requests by default
-# origins list = who is allowed to talk to this API
+# Allow React frontend to talk to this backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",   # React dev server (Vite default)
-        "http://localhost:3000",   # fallback if you change Vite port
-    ],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Routes
+# Register routes — prefix is added to every route inside that file
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
+app.include_router(chat_router, prefix="/api/chat", tags=["Chat"])
 
-# Health check — CI/CD pings this to confirm the server is alive
+
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok"}

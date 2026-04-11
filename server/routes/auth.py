@@ -1,61 +1,83 @@
-from fastapi import APIRouter, HTTPException
-from models.auth import RegisterRequest, LoginRequest, AuthResponse
-from config import supabase  # config.py at server root
+# routes/auth.py — Login & Register
+# ──────────────────────────────────
+# ONE job: handle user accounts.
+#
+# Two routes:
+#   POST /api/auth/register  → creates a new account, returns JWT token
+#   POST /api/auth/login     → checks credentials, returns JWT token
+#
+# WHY call Supabase directly with httpx (not the SDK)?
+#   The Supabase Python SDK had bugs with email confirmation.
+#   Raw HTTP calls are simpler and more reliable.
+#
+# What is a JWT token?
+#   A string that proves "I am logged in". Frontend stores it and sends it
+#   on every request. Like a wristband at a concert — show it to get in.
+
+from fastapi import APIRouter, HTTPException, Form
+from pydantic import BaseModel, EmailStr
+import httpx
+from config import settings
 
 router = APIRouter()
 
 
-@router.post("/register", response_model=AuthResponse)
-def register(body: RegisterRequest):
-    """
-    Creates a new user account via Supabase Auth.
-    Supabase handles: password hashing, duplicate email check, JWT creation.
-    We just call sign_up() and return the token.
+# Request shape — what the frontend must send
+class AuthBody(BaseModel):
+    email: EmailStr   # validates it's a real email format
+    password: str
 
-    Loophole: Supabase sends a confirmation email by default.
-    For development, disable this in Supabase dashboard:
-    Authentication → Settings → Disable email confirmations
-    """
-    try:
-        response = supabase.auth.sign_up({
-            "email": body.email,
-            "password": body.password,
-        })
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
-    # Supabase returns None session if email confirmation is required
-    if response.session is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Check your email to confirm your account. Or disable email confirmation in Supabase dashboard for dev."
-        )
+# Response shape — what we send back
+class AuthResponse(BaseModel):
+    access_token: str       # the JWT token
+    token_type: str = "bearer"
+    user_id: str
+    email: str
 
+
+def _login(email: str, password: str) -> AuthResponse:
+    # Private helper — called by both /login and /login/form
+    res = httpx.post(
+        f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=password",
+        json={"email": email, "password": password},
+        headers={"apikey": settings.SUPABASE_SERVICE_KEY},
+    )
+    if res.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    data = res.json()
     return AuthResponse(
-        access_token=response.session.access_token,
-        user_id=str(response.user.id),
-        email=response.user.email,
+        access_token=data["access_token"],
+        user_id=data["user"]["id"],
+        email=data["user"]["email"],
+    )
+
+
+@router.post("/register", response_model=AuthResponse)
+def register(body: AuthBody):
+    res = httpx.post(
+        f"{settings.SUPABASE_URL}/auth/v1/signup",
+        json={"email": body.email, "password": body.password},
+        headers={"apikey": settings.SUPABASE_SERVICE_KEY},
+    )
+    data = res.json()
+    if res.status_code != 200:
+        raise HTTPException(status_code=400, detail=data.get("msg", "Registration failed"))
+    if not data.get("access_token"):
+        raise HTTPException(status_code=400, detail="Disable email confirmation: Supabase → Auth → Settings → Confirm email OFF")
+    return AuthResponse(
+        access_token=data["access_token"],
+        user_id=data["user"]["id"],
+        email=data["user"]["email"],
     )
 
 
 @router.post("/login", response_model=AuthResponse)
-def login(body: LoginRequest):
-    """
-    Signs in an existing user via Supabase Auth.
-    Returns a JWT (access_token) — frontend stores this and sends it
-    in the Authorization header on every subsequent request.
-    """
-    try:
-        response = supabase.auth.sign_in_with_password({
-            "email": body.email,
-            "password": body.password,
-        })
-    except Exception as e:
-        # Don't reveal whether the email exists — always say "invalid credentials"
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+def login(body: AuthBody):
+    return _login(body.email, body.password)
 
-    return AuthResponse(
-        access_token=response.session.access_token,
-        user_id=str(response.user.id),
-        email=response.user.email,
-    )
+
+# Swagger's Authorize button sends form data (not JSON) — this handles that
+@router.post("/login/form", response_model=AuthResponse)
+def login_form(username: str = Form(...), password: str = Form(...)):
+    return _login(username, password)   # username = email in Swagger's form
