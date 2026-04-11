@@ -3,7 +3,7 @@
 # Only triggers when message count >= SUMMARY_THRESHOLD.
 # Runs in a background thread so the user never waits for it.
 
-from concurrent.futures import ThreadPoolExecutor
+import threading
 from config import supabase
 from utils.history import SUMMARY_THRESHOLD
 
@@ -38,5 +38,4 @@ def _run(user_id: str, agent: str, llm):
 
 def maybe_summarize(user_id: str, agent: str, count: int, llm):
     if count >= SUMMARY_THRESHOLD:
-        with ThreadPoolExecutor(max_workers=1) as ex:
-            ex.submit(_run, user_id, agent, llm)
+        threading.Thread(target=_run, args=(user_id, agent, llm), daemon=True).start()
