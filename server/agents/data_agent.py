@@ -25,7 +25,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from agents.agent_factory import (
     make_llm, make_chain, make_tool_schema,
-    save_list_to_table, run_agent, fetch_user_context,
+    save_list_to_table, run_plain_agent, fetch_user_context,
 )
 from prompts.data_prompt import build_prompt
 from utils.history import get_history, save_messages
@@ -85,7 +85,13 @@ def run(user_id: str, message: str) -> dict:
 
     # 3. Run: history -> invoke -> save exchange
     history, count = get_history(user_id, AGENT)
-    result: DataAgentResponse = chain.invoke({"history": history, "input": message})
+    result: DataAgentResponse | None = chain.invoke({"history": history, "input": message})
+
+    if result is None:
+        # If the model did not return structured tool output, fall back to a plain reply
+        # so the app does not crash and the user still gets a response.
+        return run_plain_agent(user_id, AGENT, message, prompt | llm, llm)
+
     save_messages(user_id, AGENT, message, result.reply)
 
     # 4. Save whichever lists are non-empty (0–3 DB writes)

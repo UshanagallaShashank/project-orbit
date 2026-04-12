@@ -14,6 +14,7 @@ import { ChatPage }      from '@/pages/ChatPage'
 import { TasksPage }     from '@/pages/TasksPage'
 import { TrackerPage }   from '@/pages/TrackerPage'
 import { MemoriesPage }  from '@/pages/MemoriesPage'
+import { UploadPage }    from '@/pages/UploadPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -76,6 +77,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AppLayout><MemoriesPage /></AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/upload"
+          element={
+            <ProtectedRoute>
+              <AppLayout><UploadPage /></AppLayout>
             </ProtectedRoute>
           }
         />

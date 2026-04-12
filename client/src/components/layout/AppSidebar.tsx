@@ -9,6 +9,7 @@ import {
   CheckSquare,
   Activity,
   BookMarked,
+  Upload,
   Orbit,
 } from 'lucide-react'
 import {
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
   { to: '/tasks',     label: 'Tasks',     icon: CheckSquare    },
   { to: '/tracker',   label: 'Tracker',   icon: Activity       },
   { to: '/memories',  label: 'Memories',  icon: BookMarked     },
+  { to: '/upload',    label: 'Documents', icon: Upload         },
 ]
 
 export function AppSidebar() {

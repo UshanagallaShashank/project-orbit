@@ -1,19 +1,19 @@
 // pages/TasksPage.tsx
-// Lists all tasks with toggle (done/undone) and radial progress chart.
+// Task list with progress stats and a compact donut chart.
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { tasksApi } from '@/api/tasks'
 import type { Task } from '@/types'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
 import {
-  RadialBarChart,
-  RadialBar,
-  PolarRadiusAxis,
-  Label,
-} from 'recharts'
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Progress } from '@/components/ui/progress'
+import { PieChart, Pie } from 'recharts'
 import {
   ChartContainer,
   ChartTooltip,
@@ -27,7 +27,7 @@ const chartConfig: ChartConfig = {
 }
 
 export function TasksPage() {
-  const [tasks, setTasks]   = useState<Task[]>([])
+  const [tasks, setTasks]     = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -50,90 +50,111 @@ export function TasksPage() {
   const pendingCount = tasks.length - doneCount
   const percent      = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0
 
-  const chartData = [{ done: doneCount, pending: pendingCount }]
+  const chartData = [
+    { name: 'done',    value: doneCount,    fill: 'var(--color-done)'    },
+    { name: 'pending', value: pendingCount, fill: 'var(--color-pending)' },
+  ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <h1 className="text-xl font-semibold">Tasks</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Radial progress */}
-        <Card className="md:col-span-1">
-          <CardHeader className="pb-0">
-            <CardTitle className="text-sm">Progress</CardTitle>
-            <CardDescription>{doneCount} of {tasks.length} completed</CardDescription>
+      {/* Progress summary row */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Total',     value: tasks.length  },
+          { label: 'Done',      value: doneCount     },
+          { label: 'Remaining', value: pendingCount  },
+        ].map(({ label, value }) => (
+          <Card key={label}>
+            <CardContent className="pt-4 pb-3 px-4">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              {loading
+                ? <Skeleton className="mt-1 h-7 w-10" />
+                : <p className="mt-1 text-2xl font-semibold">{value}</p>
+              }
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Main content: donut + task list side by side */}
+      <div className="grid gap-4 md:grid-cols-[200px_1fr]">
+
+        {/* Compact donut */}
+        <Card>
+          <CardHeader className="pb-1 pt-4 px-4">
+            <CardTitle className="text-xs text-muted-foreground font-medium">Progress</CardTitle>
           </CardHeader>
-          <CardContent className="pb-4">
-            <ChartContainer config={chartConfig} className="mx-auto h-[180px]">
-              <RadialBarChart
-                data={chartData}
-                startAngle={90}
-                endAngle={-270}
-                innerRadius={55}
-                outerRadius={85}
-              >
-                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                <PolarRadiusAxis tick={false} axisLine={false}>
-                  <Label
-                    content={({ viewBox }) => {
-                      if (!viewBox || !('cx' in viewBox)) return null
-                      return (
-                        <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                          <tspan x={viewBox.cx} dy="-6" className="fill-foreground text-2xl font-bold">
-                            {percent}%
-                          </tspan>
-                          <tspan x={viewBox.cx} dy="20" className="fill-muted-foreground text-xs">
-                            done
-                          </tspan>
-                        </text>
-                      )
-                    }}
+          <CardContent className="px-4 pb-4 flex flex-col items-center gap-3">
+            <div className="relative">
+              <ChartContainer config={chartConfig} className="h-[130px] w-[130px]">
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={38}
+                    outerRadius={56}
+                    dataKey="value"
+                    strokeWidth={0}
                   />
-                </PolarRadiusAxis>
-                <RadialBar dataKey="done"    stackId="a" fill="var(--color-done)"    cornerRadius={6} />
-                <RadialBar dataKey="pending" stackId="a" fill="var(--color-pending)" cornerRadius={6} />
-              </RadialBarChart>
-            </ChartContainer>
+                </PieChart>
+              </ChartContainer>
+              {/* Center label absolutely positioned over the chart */}
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-xl font-bold leading-none">{percent}%</span>
+                <span className="mt-0.5 text-[10px] text-muted-foreground">done</span>
+              </div>
+            </div>
+            <Progress value={percent} className="h-1.5 w-full" />
+            <p className="text-xs text-muted-foreground">{doneCount} of {tasks.length} tasks</p>
           </CardContent>
         </Card>
 
         {/* Task list */}
-        <Card className="md:col-span-2">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">All tasks</CardTitle>
-              <Badge variant="secondary">{tasks.length}</Badge>
-            </div>
+        <Card>
+          <CardHeader className="pb-2 pt-4 px-4">
+            <CardTitle className="text-sm">All tasks</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-4 pb-4">
             {loading ? (
               <div className="space-y-2">
-                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-9 w-full" />)}
               </div>
             ) : tasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No tasks yet. Ask the AI to add some.</p>
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No tasks yet. Ask Orbit to add some.
+              </p>
             ) : (
-              <ul className="space-y-1">
+              <ul className="divide-y divide-border">
                 {tasks.map((task) => (
                   <li
                     key={task.id}
                     onClick={() => toggle(task.id, !task.done)}
-                    className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-muted cursor-pointer group"
+                    className="flex items-center gap-3 py-2.5 cursor-pointer group"
                   >
+                    {/* Custom checkbox */}
                     <div
-                      className={`h-4 w-4 rounded border flex items-center justify-center shrink-0
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded
+                        border transition-colors
                         ${task.done
-                          ? 'bg-primary border-primary'
-                          : 'border-muted-foreground group-hover:border-foreground'
+                          ? 'border-primary bg-primary'
+                          : 'border-muted-foreground/40 group-hover:border-foreground'
                         }`}
                     >
                       {task.done && (
                         <svg className="h-2.5 w-2.5 text-primary-foreground" fill="none" viewBox="0 0 12 12">
-                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.8"
+                            strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       )}
                     </div>
-                    <span className={`text-sm flex-1 ${task.done ? 'line-through text-muted-foreground' : ''}`}>
+                    <span
+                      className={`text-sm flex-1 leading-snug
+                        ${task.done ? 'line-through text-muted-foreground' : 'text-foreground'}`}
+                    >
                       {task.title}
                     </span>
                   </li>
@@ -142,6 +163,7 @@ export function TasksPage() {
             )}
           </CardContent>
         </Card>
+
       </div>
     </div>
   )

@@ -20,12 +20,39 @@ interface ChatStore {
   clearError: () => void
 }
 
+const STORAGE_KEY = 'orbit-chat-history'
+
+function parseStoredMessages(value: string | null): Message[] {
+  if (!value) return []
+
+  try {
+    const parsed = JSON.parse(value) as Array<Omit<Message, 'timestamp'> & { timestamp: string }>
+
+    return parsed.map((message) => ({
+      ...message,
+      timestamp: new Date(message.timestamp),
+    }))
+  } catch {
+    return []
+  }
+}
+
+function loadMessages(): Message[] {
+  if (typeof window === 'undefined') return []
+  return parseStoredMessages(window.localStorage.getItem(STORAGE_KEY))
+}
+
+function saveMessages(messages: Message[]) {
+  if (typeof window === 'undefined') return
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+}
+
 function makeId(): string {
   return Math.random().toString(36).slice(2, 10)
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
-  messages: [],
+  messages: loadMessages(),
   status: 'idle',
   activeAgent: 'general',
   error: null,
@@ -42,11 +69,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       timestamp: new Date(),
     }
 
-    set((s) => ({
-      messages: [...s.messages, userMessage],
-      status: 'sending',
-      error: null,
-    }))
+    set((s) => {
+      const messages = [...s.messages, userMessage]
+      saveMessages(messages)
+      return { messages, status: 'sending', error: null }
+    })
 
     try {
       const res = await chatApi.send(text)
@@ -63,11 +90,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         timestamp: new Date(),
       }
 
-      set((s) => ({
-        messages: [...s.messages, assistantMessage],
-        status: 'idle',
-        activeAgent: agent_used,
-      }))
+      set((s) => {
+        const messages = [...s.messages, assistantMessage]
+        saveMessages(messages)
+        return { messages, status: 'idle', activeAgent: agent_used }
+      })
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Something went wrong'
@@ -75,6 +102,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }
   },
 
-  clearHistory: () => set({ messages: [], status: 'idle', error: null }),
+  clearHistory: () => {
+    saveMessages([])
+    set({ messages: [], status: 'idle', error: null })
+  },
   clearError: () => set({ error: null, status: 'idle' }),
 }))
