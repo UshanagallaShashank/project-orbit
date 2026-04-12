@@ -7,7 +7,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { UploadCloud, FileText, Trash2, CheckCircle2 } from 'lucide-react'
+import { UploadCloud, FileText, Image, Trash2, CheckCircle2 } from 'lucide-react'
 import { uploadApi, type UploadedDoc } from '@/api/upload'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,8 +19,12 @@ const ACCEPTED_TYPES = [
   'application/pdf',
   'text/plain',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
 ]
-const ACCEPTED_EXT = '.pdf,.txt,.docx'
+const ACCEPTED_EXT = '.pdf,.txt,.docx,.png,.jpg,.jpeg,.webp,.gif'
 const MAX_MB = 10
 
 function formatBytes(bytes: number) {
@@ -45,8 +49,10 @@ export function UploadPage() {
   }, [])
 
   async function handleFile(file: File) {
-    if (!ACCEPTED_TYPES.includes(file.type) && !file.name.endsWith('.txt')) {
-      toast.error('Unsupported file type. Use PDF, TXT, or DOCX.')
+    const accepted = ACCEPTED_TYPES.includes(file.type)
+      || ACCEPTED_EXT.split(',').some((ext) => file.name.toLowerCase().endsWith(ext))
+    if (!accepted) {
+      toast.error('Unsupported file type. Use PDF, DOCX, TXT, PNG, or JPG.')
       return
     }
     if (file.size > MAX_MB * 1024 * 1024) {
@@ -137,7 +143,7 @@ export function UploadPage() {
             {dragging ? 'Drop to upload' : 'Drop a file or click to browse'}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            PDF, DOCX, TXT — up to {MAX_MB} MB
+            PDF, DOCX, TXT, PNG, JPG — up to {MAX_MB} MB
           </p>
         </div>
         {!uploading && (
@@ -180,7 +186,10 @@ export function UploadPage() {
               {docs.map((doc) => (
                 <li key={doc.id} className="flex items-center gap-3 py-3 group">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    {/\.(png|jpg|jpeg|webp|gif)$/i.test(doc.filename)
+                      ? <Image className="h-4 w-4 text-muted-foreground" />
+                      : <FileText className="h-4 w-4 text-muted-foreground" />
+                    }
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="truncate text-sm font-medium">{doc.filename}</p>

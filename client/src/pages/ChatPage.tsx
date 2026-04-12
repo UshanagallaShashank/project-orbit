@@ -15,11 +15,9 @@ import { MemoryPanel } from '@/components/panels/MemoryPanel'
 import { toast } from 'sonner'
 import { useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { SquarePen } from 'lucide-react'
 
 export function ChatPage() {
-  const { messages, status, error, sendMessage, clearHistory, clearError } = useChatStore()
+  const { messages, status, error, sendMessage, clearError } = useChatStore()
 
   useEffect(() => {
     if (error) {
@@ -54,23 +52,9 @@ export function ChatPage() {
               <p className="text-sm font-semibold text-foreground">Chat with Orbit</p>
               <p className="text-xs text-muted-foreground">Send messages, log actions, and let Orbit extract tasks and habits.</p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
-                {status === 'sending' ? 'Sending…' : 'Ready'}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                title="New chat"
-                onClick={() => {
-                  clearHistory()
-                  toast.success('Started a new chat')
-                }}
-              >
-                <SquarePen className="h-4 w-4" />
-              </Button>
-            </div>
+            <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+              {status === 'sending' ? 'Sending…' : 'Ready'}
+            </span>
           </div>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">

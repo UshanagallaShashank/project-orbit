@@ -1,8 +1,6 @@
 // components/layout/AppSidebar.tsx
-// Main nav sidebar using shadcn Sidebar primitives.
-// Shows agent-based nav links: Dashboard, Chat, Tasks, Tracker, Memories.
 
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   MessageSquare,
@@ -11,6 +9,7 @@ import {
   BookMarked,
   Upload,
   Orbit,
+  SquarePen,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -22,8 +21,10 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/authStore'
+import { useChatStore } from '@/stores/chatStore'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { toast } from 'sonner'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -35,19 +36,39 @@ const NAV_ITEMS = [
 ]
 
 export function AppSidebar() {
-  const location = useLocation()
+  const location    = useLocation()
+  const navigate    = useNavigate()
   const { user, logout } = useAuthStore()
+  const clearHistory     = useChatStore((s) => s.clearHistory)
 
   const initials = user?.email
     ? user.email.slice(0, 2).toUpperCase()
     : 'OR'
 
+  function handleNewChat() {
+    clearHistory()
+    navigate('/chat')
+    toast.success('New chat started')
+  }
+
   return (
     <Sidebar>
-      <SidebarHeader className="px-4 py-5">
-        <div className="flex items-center gap-2">
-          <Orbit className="h-6 w-6" />
-          <span className="text-lg font-semibold tracking-tight">Orbit</span>
+      <SidebarHeader className="px-3 py-4">
+        {/* Logo row + New Chat button */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 px-1">
+            <Orbit className="h-5 w-5" />
+            <span className="text-base font-semibold tracking-tight">Orbit</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            title="New chat"
+            onClick={handleNewChat}
+          >
+            <SquarePen className="h-4 w-4" />
+          </Button>
         </div>
       </SidebarHeader>
 

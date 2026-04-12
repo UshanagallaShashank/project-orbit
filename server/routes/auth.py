@@ -22,15 +22,18 @@ from config import settings
 router = APIRouter()
 
 
-# Request shape - what the frontend must send
 class AuthBody(BaseModel):
-    email: EmailStr   # validates it's a real email format
+    email: EmailStr
     password: str
 
 
-# Response shape - what we send back
+class RefreshBody(BaseModel):
+    refresh_token: str
+
+
 class AuthResponse(BaseModel):
-    access_token: str       # the JWT token
+    access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     user_id: str
     email: str
@@ -48,6 +51,7 @@ def _login(email: str, password: str) -> AuthResponse:
     data = res.json()
     return AuthResponse(
         access_token=data["access_token"],
+        refresh_token=data["refresh_token"],
         user_id=data["user"]["id"],
         email=data["user"]["email"],
     )
@@ -67,6 +71,25 @@ def register(body: AuthBody):
         raise HTTPException(status_code=400, detail="Disable email confirmation: Supabase -> Auth -> Settings -> Confirm email OFF")
     return AuthResponse(
         access_token=data["access_token"],
+        refresh_token=data["refresh_token"],
+        user_id=data["user"]["id"],
+        email=data["user"]["email"],
+    )
+
+
+@router.post("/refresh", response_model=AuthResponse)
+def refresh(body: RefreshBody):
+    res = httpx.post(
+        f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token",
+        json={"refresh_token": body.refresh_token},
+        headers={"apikey": settings.SUPABASE_SERVICE_KEY},
+    )
+    if res.status_code != 200:
+        raise HTTPException(status_code=401, detail="Session expired — please log in again")
+    data = res.json()
+    return AuthResponse(
+        access_token=data["access_token"],
+        refresh_token=data["refresh_token"],
         user_id=data["user"]["id"],
         email=data["user"]["email"],
     )
