@@ -10,6 +10,7 @@ import {
   Upload,
   Orbit,
   SquarePen,
+  LogOut,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -36,14 +37,14 @@ const NAV_ITEMS = [
 ]
 
 export function AppSidebar() {
-  const location    = useLocation()
-  const navigate    = useNavigate()
+  const location     = useLocation()
+  const navigate     = useNavigate()
   const { user, logout } = useAuthStore()
-  const clearHistory     = useChatStore((s) => s.clearHistory)
+  const clearHistory = useChatStore((s) => s.clearHistory)
 
-  const initials = user?.email
-    ? user.email.slice(0, 2).toUpperCase()
-    : 'OR'
+  // Derive display name from email: "shashank@gmail.com" -> "shashank"
+  const username = user?.email?.split('@')[0] ?? 'User'
+  const initials = username.slice(0, 2).toUpperCase()
 
   function handleNewChat() {
     clearHistory()
@@ -51,10 +52,15 @@ export function AppSidebar() {
     toast.success('New chat started')
   }
 
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
   return (
     <Sidebar>
+      {/* Header: logo + new chat */}
       <SidebarHeader className="px-3 py-4">
-        {/* Logo row + New Chat button */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 px-1">
             <Orbit className="h-5 w-5" />
@@ -72,6 +78,7 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
+      {/* Nav links */}
       <SidebarContent className="px-2">
         <SidebarMenu>
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
@@ -91,18 +98,26 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter className="px-4 py-4 border-t border-border">
-        <div className="flex items-center gap-3 mb-3">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+      {/* Footer: user info + sign out */}
+      <SidebarFooter className="border-t border-border px-3 py-3">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8 shrink-0">
+            <AvatarFallback className="text-xs font-medium bg-muted">{initials}</AvatarFallback>
           </Avatar>
-          <span className="text-sm text-muted-foreground truncate flex-1">
-            {user?.email ?? 'Guest'}
-          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{username}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+            title="Sign out"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
-        <Button variant="ghost" size="sm" className="w-full justify-start" onClick={logout}>
-          Sign out
-        </Button>
       </SidebarFooter>
     </Sidebar>
   )

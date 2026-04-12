@@ -15,23 +15,39 @@ export type AgentName =
 
 export type ChatStatus = 'idle' | 'sending' | 'error'
 
+export interface Job {
+  title:   string
+  company: string
+  source:  string
+  url:     string
+  snippet: string
+}
+
 export interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
   agentUsed?: AgentName
+  agentsUsed?: AgentName[]
   tasks?: string[]
   entries?: string[]
   memories?: string[]
+  jobs?: Job[]
+  skills?: string[]
+  roles?: string[]
   timestamp: Date
 }
 
 export interface ChatResponse {
   reply: string
   agent_used: AgentName
+  agents_used?: AgentName[]
   tasks?: string[]
   entries?: string[]
   memories?: string[]
+  jobs?: Job[]
+  skills?: string[]
+  roles?: string[]
 }
 
 // Tasks

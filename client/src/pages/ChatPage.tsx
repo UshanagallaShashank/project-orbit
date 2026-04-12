@@ -1,10 +1,10 @@
 // pages/ChatPage.tsx
 // Core page: chat on the left, contextual data panel on the right.
 // The right panel is conditionally shown based on what the last AI message returned.
-// - task agent   -> TaskPanel
-// - tracker agent -> TrackerPanel
-// - memory agent  -> MemoryPanel
-// - all three can appear simultaneously (data_agent extracts all at once)
+// - task/tracker/memory agent -> respective panels
+// - resume agent -> skills + roles panel
+// - job agent    -> job listings panel
+// - all can appear simultaneously (multi-agent routing)
 
 import { useChatStore } from '@/stores/chatStore'
 import { ChatWindow } from '@/components/chat/ChatWindow'
@@ -15,6 +15,7 @@ import { MemoryPanel } from '@/components/panels/MemoryPanel'
 import { toast } from 'sonner'
 import { useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { ExternalLink, Briefcase, Code2 } from 'lucide-react'
 
 export function ChatPage() {
   const { messages, status, error, sendMessage, clearError } = useChatStore()
@@ -33,7 +34,11 @@ export function ChatPage() {
   const tasks    = lastAssistant?.tasks    ?? []
   const entries  = lastAssistant?.entries  ?? []
   const memories = lastAssistant?.memories ?? []
+  const jobs     = lastAssistant?.jobs     ?? []
+  const skills   = lastAssistant?.skills   ?? []
+  const roles    = lastAssistant?.roles    ?? []
   const hasPanelData = tasks.length > 0 || entries.length > 0 || memories.length > 0
+    || jobs.length > 0 || skills.length > 0 || roles.length > 0
 
   const promptSuggestions = [
     'Add a task for tomorrow morning',
@@ -71,6 +76,89 @@ export function ChatPage() {
             <TaskPanel    tasks={tasks}       />
             <TrackerPanel entries={entries}   />
             <MemoryPanel  memories={memories} />
+
+            {/* Resume skills panel */}
+            {(skills.length > 0 || roles.length > 0) && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Code2 className="h-4 w-4" />
+                    Resume Profile
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {skills.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Skills</p>
+                      <div className="flex flex-wrap gap-1">
+                        {skills.map((s) => (
+                          <span key={s} className="text-xs bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200 px-2 py-0.5 rounded-full">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {roles.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">Target Roles</p>
+                      <div className="flex flex-wrap gap-1">
+                        {roles.map((r) => (
+                          <span key={r} className="text-xs bg-muted px-2 py-0.5 rounded-full">
+                            {r}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Job listings panel */}
+            {jobs.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Briefcase className="h-4 w-4" />
+                    Job Matches
+                  </CardTitle>
+                  <CardDescription>{jobs.length} listings found</CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ul className="divide-y divide-border">
+                    {jobs.map((job, i) => (
+                      <li key={i} className="flex items-start gap-3 px-4 py-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{job.title}</p>
+                          {job.company && (
+                            <p className="text-xs text-muted-foreground">{job.company}</p>
+                          )}
+                          {job.source && (
+                            <span className="mt-1 inline-block text-xs bg-muted px-1.5 py-0.5 rounded-full">
+                              {job.source}
+                            </span>
+                          )}
+                          {job.snippet && (
+                            <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{job.snippet}</p>
+                          )}
+                        </div>
+                        {job.url && (
+                          <a
+                            href={job.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 mt-0.5 text-muted-foreground hover:text-foreground"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
           </div>
         ) : (
           <Card className="h-full">

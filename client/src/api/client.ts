@@ -14,14 +14,20 @@ import type { InternalAxiosRequestConfig } from 'axios'
 
 const client = axios.create({
   baseURL: 'http://localhost:8000',
-  headers: { 'Content-Type': 'application/json' },
+  // No global Content-Type — set it per request in the interceptor below.
+  // FormData (file uploads) requires the browser to auto-generate the header
+  // with the multipart boundary; setting it here would break that.
 })
 
-// Attach access token before every request
+// Attach access token + set Content-Type before every request
 client.interceptors.request.use((config) => {
   const token = localStorage.getItem('orbit_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
+  }
+  // Only set JSON Content-Type for non-file requests
+  if (!(config.data instanceof FormData)) {
+    config.headers['Content-Type'] = 'application/json'
   }
   return config
 })
