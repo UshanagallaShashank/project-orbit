@@ -1,11 +1,13 @@
 // components/chat/MessageBubble.tsx
-// Renders a single chat message with role styling, agent badges, and markdown.
+// Renders a single chat message with role styling, agent badges, markdown, and response stats.
 
 import { format } from 'date-fns'
 import { ExternalLink, Star } from 'lucide-react'
 import Markdown from 'react-markdown'
 import type { Message, AgentName } from '@/types'
 import { AgentBadge } from './AgentBadge'
+import { ResponseStats } from './ResponseStats'
+import { AgentGraphVisualization } from './AgentGraphVisualization'
 
 interface MessageBubbleProps {
   message: Message
@@ -38,7 +40,12 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
       </div>
 
-      <div className={`flex min-w-0 w-full flex-col gap-1.5 max-w-full sm:max-w-[82%] ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`flex min-w-0 w-full flex-col gap-2 max-w-full sm:max-w-[82%] ${isUser ? 'items-end' : 'items-start'}`}>
+
+        {/* Agent flow visualization */}
+        {!isUser && message.metadata?.agentsInvolved && message.metadata.agentsInvolved.length > 0 && (
+          <AgentGraphVisualization agents={message.metadata.agentsInvolved} />
+        )}
 
         {/* Agent badges */}
         {!isUser && badgeAgents.length > 0 && (
@@ -65,6 +72,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             </div>
           )}
         </div>
+
+        {/* Response stats */}
+        {!isUser && message.metadata && (
+          <ResponseStats metadata={message.metadata} collapsed={true} />
+        )}
 
         {/* Job results — inline cards */}
         {!isUser && message.jobs && message.jobs.length > 0 && (

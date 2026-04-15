@@ -263,7 +263,12 @@ def run_plain_agent(
     Same steps as run_agent but chain returns a message object, not a Pydantic model.
     """
     history, count = get_history(user_id, agent_name)
-    reply: str = chain.invoke({"history": history, "input": message}).content
+    agent_context = fetch_user_context(user_id)
+    reply: str = chain.invoke({
+        "agent_context": agent_context,
+        "history": history,
+        "input": message
+    }).content
 
     save_messages(user_id, agent_name, message, reply)
     maybe_summarize(user_id, agent_name, count + 1, llm)

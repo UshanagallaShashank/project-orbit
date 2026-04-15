@@ -81,7 +81,7 @@ export function IncomePage() {
   const netColor = net >= 0 ? 'text-green-600' : 'text-red-500'
 
   return (
-    <div className="space-y-5">
+    <div className="h-full overflow-y-auto"><div className="space-y-5 p-4 md:p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Income</h1>
         <span className="text-sm text-muted-foreground">{currentMonthLabel()}</span>
@@ -137,7 +137,7 @@ export function IncomePage() {
                     axisLine={false}
                   />
                   <Tooltip
-                    formatter={(v: number) => [fmt(v), 'Amount']}
+                    formatter={(v: any) => [fmt(v), 'Amount']}
                     cursor={{ fill: 'transparent' }}
                   />
                   <Bar dataKey="amt" radius={[0, 4, 4, 0]} maxBarSize={20}>
@@ -216,6 +216,6 @@ export function IncomePage() {
         </Card>
 
       </div>
-    </div>
+    </div></div>
   )
 }

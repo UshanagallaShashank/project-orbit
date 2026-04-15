@@ -125,7 +125,7 @@ export function UploadPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="h-full overflow-y-auto"><div className="space-y-6 max-w-2xl p-4 md:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold">Documents</h1>
@@ -244,6 +244,6 @@ export function UploadPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </div></div>
   )
 }

@@ -56,7 +56,7 @@ export function TasksPage() {
   ]
 
   return (
-    <div className="space-y-5">
+    <div className="h-full overflow-y-auto"><div className="space-y-5 p-4 md:p-6">
       <h1 className="text-xl font-semibold">Tasks</h1>
 
       {/* Progress summary row */}
@@ -165,6 +165,6 @@ export function TasksPage() {
         </Card>
 
       </div>
-    </div>
+    </div></div>
   )
 }

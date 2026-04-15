@@ -81,7 +81,7 @@ export function DashboardPage() {
   const doneTasks    = tasks.filter((t) => t.done).length
 
   return (
-    <div className="space-y-6">
+    <div className="h-full overflow-y-auto"><div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col gap-4 lg:flex-row">
         <div className="flex-1 min-w-0">
           <div className="rounded-3xl border border-border bg-card/90 p-6 shadow-sm shadow-slate-600/5">
@@ -163,6 +163,6 @@ export function DashboardPage() {
           </ChartContainer>
         </CardContent>
       </Card>
-    </div>
+    </div></div>
   )
 }

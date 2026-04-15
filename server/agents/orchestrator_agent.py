@@ -14,6 +14,7 @@
 #
 # To add a new agent: import it and add one line to _ROUTES.
 
+import time
 from typing import List, Literal
 from pydantic import BaseModel
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -25,6 +26,20 @@ from prompts.orchestrator_prompt import SYSTEM_PROMPT
 AGENT = "orchestrator"
 
 AgentName = Literal["task", "mentor", "tracker", "memory", "job", "resume", "mock", "income", "general"]
+
+# Agent display metadata
+AGENT_METADATA_MAP = {
+    "task":    {"displayName": "Task Agent",    "icon": "T",  "color": "#2563eb", "backgroundColor": "#dbeafe"},
+    "tracker": {"displayName": "Tracker Agent", "icon": "TR", "color": "#059669", "backgroundColor": "#d1fae5"},
+    "memory":  {"displayName": "Memory Agent",  "icon": "M",  "color": "#7c3aed", "backgroundColor": "#ede9fe"},
+    "mentor":  {"displayName": "Mentor Agent",  "icon": "MT", "color": "#dc2626", "backgroundColor": "#fee2e2"},
+    "job":     {"displayName": "Job Agent",     "icon": "J",  "color": "#d97706", "backgroundColor": "#fef3c7"},
+    "resume":  {"displayName": "Resume Agent",  "icon": "R",  "color": "#4f46e5", "backgroundColor": "#e0e7ff"},
+    "income":  {"displayName": "Income Agent",  "icon": "IN", "color": "#0891b2", "backgroundColor": "#cffafe"},
+    "general": {"displayName": "General Chat",  "icon": "G",  "color": "#06b6d4", "backgroundColor": "#cffafe"},
+    "comms":   {"displayName": "Comms Agent",   "icon": "C",  "color": "#d946ef", "backgroundColor": "#fdf2f8"},
+    "mock":    {"displayName": "Mock Agent",    "icon": "MK", "color": "#6b7280", "backgroundColor": "#f3f4f6"},
+}
 
 
 # -- Router chain --------------------------------------------------------------
@@ -142,6 +157,79 @@ def _get_routes():
     return routes
 
 
+# -- Metadata builders ---------------------------------------------------------
+
+def _estimate_tokens(text: str) -> int:
+    """
+    Rough estimate of tokens: ~1 token per 4 characters.
+    Gemini actual count may vary, but this is good enough for UI display.
+    """
+    return max(1, len(text.strip()) // 4)
+
+
+def _build_agent_metadata(agent_name: str, response_time_ms: float, tokens_used: int, status: str = "complete") -> dict:
+    """
+    Build metadata for a single agent execution.
+    Returns dict with structure matching AgentMetadata TypeScript interface.
+    """
+    meta = AGENT_METADATA_MAP.get(agent_name, {})
+    return {
+        "name": agent_name,
+        "displayName": meta.get("displayName", agent_name.capitalize()),
+        "icon": meta.get("icon", "⚡"),
+        "color": meta.get("color", "#06b6d4"),
+        "backgroundColor": meta.get("backgroundColor", "#cffafe"),
+        "tokensUsed": tokens_used,
+        "responseTime": response_time_ms,
+        "status": status,
+    }
+
+
+def _estimate_token_cost(total_tokens: int, model: str = "gemini-2.5-flash-lite") -> float:
+    """
+    Rough estimate of API cost in USD.
+    Gemini pricing (as of late 2024):
+      - Flash Lite: $0.075 per 1M input tokens, $0.30 per 1M output tokens
+      - Flash: $0.075 per 1M input + $0.30 per 1M output
+    Average to ~$0.15 per 1K tokens for demo purposes.
+    """
+    return (total_tokens / 1000) * 0.00015
+
+
+# -- Fallback reply builder ----------------------------------------------------
+
+def _build_fallback_reply(r: dict) -> str:
+    """
+    Build a plain-English summary when an agent returns an empty reply string.
+    This ensures the user always sees something, even if the LLM skipped the reply field.
+    """
+    parts = []
+    tasks    = r.get("tasks", [])
+    entries  = r.get("entries", [])
+    memories = r.get("memories", [])
+    jobs     = r.get("jobs", [])
+    skills   = r.get("skills", [])
+    roles    = r.get("roles", [])
+
+    if tasks:
+        labels = ", ".join(tasks[:3])
+        parts.append(f"Added {len(tasks)} task(s): {labels}.")
+    if entries:
+        parts.append(f"Logged {len(entries)} tracker entry/entries.")
+    if memories:
+        parts.append(f"Saved {len(memories)} memory item(s).")
+    if jobs:
+        parts.append(f"Found {len(jobs)} job match(es).")
+    if skills:
+        parts.append(f"Extracted {len(skills)} skill(s) from your resume.")
+    if roles:
+        parts.append(f"Identified target role(s): {', '.join(roles[:3])}.")
+
+    if parts:
+        return " ".join(parts)
+    return "Done. Let me know if you need anything else."
+
+
 # -- Result merger -------------------------------------------------------------
 
 def _merge_results(results: list[dict]) -> dict:
@@ -156,7 +244,10 @@ def _merge_results(results: list[dict]) -> dict:
         return {"reply": "I'm not sure how to handle that. Could you rephrase?", "agents_used": []}
 
     if len(results) == 1:
-        return results[0]
+        r = results[0]
+        if not r.get("reply"):
+            r["reply"] = _build_fallback_reply(r)
+        return r
 
     replies      = [r["reply"] for r in results if r.get("reply")]
     tasks        = []
@@ -176,7 +267,11 @@ def _merge_results(results: list[dict]) -> dict:
         elif agent:
             agents_used.append(agent)
 
-    merged: dict = {"reply": "\n\n".join(replies)}
+    merged_reply = "\n\n".join(replies)
+    if not merged_reply:
+        merged_reply = _build_fallback_reply({"tasks": tasks, "entries": entries, "memories": memories, "jobs": jobs})
+
+    merged: dict = {"reply": merged_reply}
     if tasks:
         merged["tasks"] = tasks
     if entries:
@@ -194,6 +289,8 @@ def _merge_results(results: list[dict]) -> dict:
 # -- Public API ----------------------------------------------------------------
 
 def run(user_id: str, message: str) -> dict:
+    start_turn_time = time.time()
+    
     # Step 1: classify -> list of agent names
     try:
         decision: RouteDecision = _router_chain.invoke({"input": message})
@@ -214,9 +311,12 @@ def run(user_id: str, message: str) -> dict:
     routes = _get_routes()
     results = []
     resume_profile: dict | None = None  # shared between resume -> job when both run
+    agent_execution_times: dict[str, dict] = {}  # track time + tokens per agent
 
     for name in unique_agents:
         handler = routes.get(name)
+        agent_start = time.time()
+        
         if handler:
             try:
                 # Build context from agents that have already run this turn
@@ -242,13 +342,39 @@ def run(user_id: str, message: str) -> dict:
 
                 result["agent_used"] = name
                 results.append(result)
+                
+                # Track execution metrics
+                elapsed_ms = (time.time() - agent_start) * 1000
+                reply_text = result.get("reply", "")
+                tokens_estimate = _estimate_tokens(reply_text)
+                agent_execution_times[name] = {
+                    "response_time_ms": elapsed_ms,
+                    "tokens_used": tokens_estimate,
+                    "status": "complete",
+                }
+                
             except Exception as e:
                 # Don't let one failing agent kill the whole response
                 results.append({"reply": f"({name} agent encountered an error: {e})", "agent_used": name})
+                elapsed_ms = (time.time() - agent_start) * 1000
+                agent_execution_times[name] = {
+                    "response_time_ms": elapsed_ms,
+                    "tokens_used": 0,
+                    "status": "error",
+                }
         elif name == "general" or name not in routes:
             result = run_plain_agent(user_id, AGENT, message, _general_chain, _general_llm)
             result["agent_used"] = "general"
             results.append(result)
+            
+            elapsed_ms = (time.time() - agent_start) * 1000
+            reply_text = result.get("reply", "")
+            tokens_estimate = _estimate_tokens(reply_text)
+            agent_execution_times["general"] = {
+                "response_time_ms": elapsed_ms,
+                "tokens_used": tokens_estimate,
+                "status": "complete",
+            }
 
     merged = _merge_results(results)
 
@@ -258,5 +384,35 @@ def run(user_id: str, message: str) -> dict:
 
     # Keep backward-compat single agent_used field
     merged["agent_used"] = merged["agents_used"][0] if merged["agents_used"] else "general"
+
+    # Build ResponseMetadata with agent execution details
+    agents_metadata = []
+    total_tokens = 0
+    total_response_time = 0
+    
+    for agent_name in merged.get("agents_used", []):
+        metrics = agent_execution_times.get(agent_name, {
+            "response_time_ms": 0,
+            "tokens_used": 0,
+            "status": "complete",
+        })
+        total_tokens += metrics.get("tokens_used", 0)
+        total_response_time += metrics.get("response_time_ms", 0)
+        
+        agent_meta = _build_agent_metadata(
+            agent_name=agent_name,
+            response_time_ms=metrics.get("response_time_ms", 0),
+            tokens_used=metrics.get("tokens_used", 0),
+            status=metrics.get("status", "complete"),
+        )
+        agents_metadata.append(agent_meta)
+    
+    # Attach ResponseMetadata to the merged result
+    merged["metadata"] = {
+        "totalTokensUsed": total_tokens,
+        "totalResponseTime": total_response_time,
+        "agentsInvolved": agents_metadata,
+        "costEstimate": _estimate_token_cost(total_tokens),
+    }
 
     return merged

@@ -77,7 +77,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
     try {
       const res = await chatApi.send(text)
-      const { reply, agent_used, agents_used, tasks, entries, memories, jobs, skills, roles } = res.data
+      const { reply, agent_used, agents_used, tasks, entries, memories, jobs, skills, roles, metadata } = res.data
 
       const assistantMessage: Message = {
         id: makeId(),
@@ -91,6 +91,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         jobs,
         skills,
         roles,
+        metadata,
         timestamp: new Date(),
       }
 

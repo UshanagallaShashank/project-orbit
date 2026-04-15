@@ -77,7 +77,7 @@ export function TrackerPage() {
   const radarData = categorise(entries)
 
   return (
-    <div className="space-y-6">
+    <div className="h-full overflow-y-auto"><div className="space-y-6 p-4 md:p-6">
       <h1 className="text-xl font-semibold">Tracker</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -150,6 +150,6 @@ export function TrackerPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </div></div>
   )
 }

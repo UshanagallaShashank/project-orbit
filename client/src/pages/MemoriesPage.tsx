@@ -33,7 +33,7 @@ export function MemoriesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="h-full overflow-y-auto"><div className="space-y-6 p-4 md:p-6">
       <h1 className="text-xl font-semibold">Memories</h1>
 
       <Card>
@@ -80,6 +80,6 @@ export function MemoriesPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </div></div>
   )
 }

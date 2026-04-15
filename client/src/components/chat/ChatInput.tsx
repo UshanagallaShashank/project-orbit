@@ -1,16 +1,8 @@
 // components/chat/ChatInput.tsx
-// Textarea + send button + file attachment.
-//
-// Two attachment modes based on file type:
-//   Text files (.txt, .md, .csv, .json, .py, .ts, etc.)
-//     -> read inline via FileReader, paste content into textarea
-//   Binary files (.pdf, .docx, .png, .jpg, etc.)
-//     -> upload to /api/upload (server extracts text), then inject
-//        "[Attached: filename]" reference so the AI can reference it
+// Single unified input bar: attach | textarea | send — all inside one border.
 
 import { useState, useRef } from 'react'
 import { SendHorizontal, Paperclip, X, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { uploadApi } from '@/api/upload'
 import type { ChatStatus } from '@/types'
@@ -20,24 +12,24 @@ interface ChatInputProps {
   onSend: (text: string) => void
 }
 
-const TEXT_EXTS  = ['.txt', '.md', '.csv', '.json', '.py', '.js', '.ts', '.tsx', '.jsx']
+const TEXT_EXTS   = ['.txt', '.md', '.csv', '.json', '.py', '.js', '.ts', '.tsx', '.jsx']
 const BINARY_EXTS = ['.pdf', '.docx', '.png', '.jpg', '.jpeg', '.webp', '.gif']
 const ALL_ACCEPTED = [...TEXT_EXTS, ...BINARY_EXTS].join(',')
 const MAX_TEXT_BYTES = 100_000
 
 function isTextFile(name: string) {
-  const lower = name.toLowerCase()
-  return TEXT_EXTS.some((ext) => lower.endsWith(ext))
+  return TEXT_EXTS.some((ext) => name.toLowerCase().endsWith(ext))
 }
 
 export function ChatInput({ status, onSend }: ChatInputProps) {
-  const [value, setValue]           = useState('')
-  const [fileName, setFileName]     = useState<string | null>(null)
-  const [uploading, setUploading]   = useState(false)
+  const [value, setValue]         = useState('')
+  const [fileName, setFileName]   = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileRef     = useRef<HTMLInputElement>(null)
   const isSending   = status === 'sending'
   const isDisabled  = isSending || uploading
+  const canSend     = value.trim().length > 0 && !isDisabled
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -52,22 +44,25 @@ export function ChatInput({ status, onSend }: ChatInputProps) {
     onSend(text)
     setValue('')
     setFileName(null)
-    autoResize(null)
+    resetHeight()
     textareaRef.current?.focus()
   }
 
-  function autoResize(el: HTMLTextAreaElement | null) {
-    const target = el ?? textareaRef.current
-    if (!target) return
-    target.style.height = 'auto'
-    target.style.height = `${target.scrollHeight}px`
+  function resetHeight() {
+    const el = textareaRef.current
+    if (!el) return
+    el.style.height = 'auto'
+  }
+
+  function autoResize(el: HTMLTextAreaElement) {
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`
   }
 
   function clearFile() {
     setFileName(null)
     setValue((prev) => prev.replace(/\n?\[(?:File|Attached):[^\]]+\][\s\S]*?(?=\n\[|$)/, '').trimEnd())
     if (fileRef.current) fileRef.current.value = ''
-    autoResize(null)
     textareaRef.current?.focus()
   }
 
@@ -77,7 +72,6 @@ export function ChatInput({ status, onSend }: ChatInputProps) {
     if (!file) return
 
     if (isTextFile(file.name)) {
-      // Inline paste for text files
       if (file.size > MAX_TEXT_BYTES) {
         toast.error('File too large — max 100 KB for text files')
         return
@@ -91,13 +85,12 @@ export function ChatInput({ status, onSend }: ChatInputProps) {
           const block = `\n[File: ${file.name}]\n${content}`
           return base ? base + block : block.trimStart()
         })
-        setTimeout(() => autoResize(null), 0)
+        setTimeout(() => { if (textareaRef.current) autoResize(textareaRef.current) }, 0)
         textareaRef.current?.focus()
       }
       reader.onerror = () => toast.error('Could not read file')
       reader.readAsText(file)
     } else {
-      // Upload binary files (PDF, DOCX, images) to the server
       setUploading(true)
       try {
         await uploadApi.upload(file)
@@ -107,8 +100,8 @@ export function ChatInput({ status, onSend }: ChatInputProps) {
           const ref = `\n[Attached: ${file.name}]`
           return base ? base + ref : ref.trimStart()
         })
-        toast.success(`${file.name} uploaded — Orbit can now reference it`)
-        setTimeout(() => autoResize(null), 0)
+        toast.success(`${file.name} uploaded`)
+        setTimeout(() => { if (textareaRef.current) autoResize(textareaRef.current) }, 0)
         textareaRef.current?.focus()
       } catch {
         toast.error('Upload failed — check server is running')
@@ -119,75 +112,78 @@ export function ChatInput({ status, onSend }: ChatInputProps) {
   }
 
   return (
-    <div className="flex w-full flex-col gap-2">
-      {/* File pill */}
+    <div className="flex flex-col gap-1.5">
+      {/* Attached file pill */}
       {(fileName || uploading) && (
-        <div className="flex items-center gap-1.5 self-start rounded-full border border-border bg-muted px-3 py-1 text-xs text-foreground">
+        <div className="flex items-center gap-1 self-start rounded-full border border-slate-600 bg-slate-800 px-2.5 py-1 text-xs text-slate-300">
           {uploading
-            ? <Loader2 className="h-3 w-3 shrink-0 animate-spin text-muted-foreground" />
-            : <Paperclip className="h-3 w-3 shrink-0 text-muted-foreground" />
+            ? <Loader2 className="h-3 w-3 animate-spin text-slate-400" />
+            : <Paperclip className="h-3 w-3 text-slate-400" />
           }
-          <span className="max-w-[180px] truncate">
-            {uploading ? 'Uploading…' : fileName}
-          </span>
+          <span className="max-w-[160px] truncate">{uploading ? 'Uploading...' : fileName}</span>
           {!uploading && (
-            <button
-              type="button"
-              onClick={clearFile}
-              className="ml-0.5 rounded-full text-muted-foreground hover:text-foreground"
-            >
+            <button onClick={clearFile} className="ml-0.5 text-slate-500 hover:text-slate-300">
               <X className="h-3 w-3" />
             </button>
           )}
         </div>
       )}
 
-      <div className="flex items-end gap-2">
-        <input
-          ref={fileRef}
-          type="file"
-          accept={ALL_ACCEPTED}
-          className="hidden"
-          onChange={handleFileChange}
-        />
+      {/* Unified input bar */}
+      <div className={`flex items-end gap-1 rounded-xl border px-3 py-2 transition-colors
+        ${isDisabled
+          ? 'border-slate-700/40 bg-slate-800/40'
+          : 'border-slate-600 bg-slate-800 focus-within:border-blue-500/60 focus-within:bg-slate-800'
+        }`}
+      >
+        <input ref={fileRef} type="file" accept={ALL_ACCEPTED} className="hidden" onChange={handleFileChange} />
 
-        <Button
+        {/* Attach button */}
+        <button
           type="button"
-          variant="ghost"
-          size="icon"
-          className="h-[44px] w-[44px] shrink-0 text-muted-foreground hover:text-foreground"
-          title="Attach file (PDF, DOCX, PNG, TXT…)"
           disabled={isDisabled}
           onClick={() => fileRef.current?.click()}
+          title="Attach file"
+          className="shrink-0 mb-0.5 p-1 rounded text-slate-500 hover:text-slate-300 disabled:opacity-40 transition-colors"
         >
           {uploading
             ? <Loader2 className="h-4 w-4 animate-spin" />
             : <Paperclip className="h-4 w-4" />
           }
-        </Button>
+        </button>
 
+        {/* Textarea */}
         <textarea
           ref={textareaRef}
           rows={1}
           value={value}
           onChange={(e) => { setValue(e.target.value); autoResize(e.currentTarget) }}
           onKeyDown={handleKeyDown}
-          placeholder="Message Orbit… (Enter to send, Shift+Enter for newline)"
+          placeholder="Message Orbit..."
           disabled={isDisabled}
-          className="flex-1 min-w-0 resize-none rounded-xl border border-input bg-background px-4 py-2.5
-                     text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1
-                     focus:ring-ring disabled:opacity-50 min-h-[44px] max-h-[160px] overflow-y-auto"
+          className="flex-1 min-w-0 resize-none bg-transparent text-sm text-slate-100
+                     placeholder:text-slate-500 focus:outline-none disabled:opacity-50
+                     min-h-[24px] max-h-[160px] overflow-y-auto py-0.5 leading-relaxed"
         />
 
-        <Button
-          size="icon"
+        {/* Send button */}
+        <button
+          type="button"
           onClick={submit}
-          disabled={!value.trim() || isDisabled}
-          className="h-[44px] w-[44px] flex-none"
+          disabled={!canSend}
+          className={`shrink-0 mb-0.5 p-1.5 rounded-lg transition-all
+            ${canSend
+              ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-sm'
+              : 'text-slate-600 cursor-not-allowed'
+            }`}
         >
           <SendHorizontal className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
+
+      <p className="text-[11px] text-slate-600 text-center">
+        Enter to send · Shift+Enter for new line
+      </p>
     </div>
   )
 }

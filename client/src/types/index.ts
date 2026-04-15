@@ -24,6 +24,25 @@ export interface Job {
   snippet: string
 }
 
+// Agent metadata for visualization
+export interface AgentMetadata {
+  name: AgentName
+  displayName: string
+  icon: string
+  color: string
+  backgroundColor: string
+  tokensUsed?: number
+  responseTime?: number // ms
+  status?: 'pending' | 'processing' | 'complete' | 'error'
+}
+
+export interface ResponseMetadata {
+  totalTokensUsed?: number
+  totalResponseTime?: number // ms
+  agentsInvolved?: AgentMetadata[]
+  costEstimate?: number // USD
+}
+
 export interface Message {
   id: string
   role: 'user' | 'assistant'
@@ -37,6 +56,7 @@ export interface Message {
   skills?: string[]
   roles?: string[]
   timestamp: Date
+  metadata?: ResponseMetadata
 }
 
 export interface ChatResponse {
@@ -49,6 +69,7 @@ export interface ChatResponse {
   jobs?: Job[]
   skills?: string[]
   roles?: string[]
+  metadata?: ResponseMetadata
 }
 
 // Tasks
