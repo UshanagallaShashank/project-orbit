@@ -17,11 +17,14 @@ export type AgentName =
 export type ChatStatus = 'idle' | 'sending' | 'error'
 
 export interface Job {
-  title:   string
-  company: string
-  source:  string
-  url:     string
-  snippet: string
+  title:            string
+  company:          string
+  source:           string
+  url:              string
+  snippet:          string
+  match_score?:     number
+  required_skills?: string[]
+  missing_skills?:  string[]
 }
 
 // Agent metadata for visualization

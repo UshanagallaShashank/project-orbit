@@ -61,7 +61,7 @@ def send_email(
 
     resend.api_key = settings.RESEND_API_KEY
 
-    params: dict = {
+    params: resend.Emails.SendParams = {
         "from":    "Orbit <onboarding@resend.dev>",
         "to":      [to],
         "subject": subject,
@@ -76,13 +76,13 @@ def send_email(
         params["attachments"] = [
             {
                 "filename": attachment_filename,
-                "content":  base64.b64encode(attachment_bytes).decode("utf-8"),
+                "content":  list(attachment_bytes),  # Resend v2 expects list[int]
             }
         ]
 
     try:
-        resend.Emails.send(params)
-        logger.info("email_sender: sent '%s' to %s", subject, to)
+        result = resend.Emails.send(params)
+        logger.info("email_sender: sent '%s' to %s (id=%s)", subject, to, getattr(result, "id", "?"))
         return True
     except Exception as e:
         logger.error("email_sender: failed — %s", e)

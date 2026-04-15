@@ -107,20 +107,29 @@ def _fetch_resume(user_id: str) -> str:
     return "\n\n".join(parts)
 
 
+_NO_RESUME_REPLY = (
+    "No resume on file. Upload yours on the Documents page "
+    "and I can analyse it, tailor it for a role, and match you to jobs."
+)
+
 def run(user_id: str, message: str) -> dict:
     resume_text = _fetch_resume(user_id)
 
-    if resume_text:
-        system = (
-            SYSTEM_PROMPT
-            + f"\n\n[RESUME CONTEXT:\n{resume_text}\n]"
-        )
-    else:
-        system = (
-            SYSTEM_PROMPT
-            + "\n\n[RESUME CONTEXT: No resume uploaded yet. "
-            "Ask the user to upload their resume at the Documents page.]"
-        )
+    # Hard-coded guardrail — never let the LLM handle a missing resume.
+    # Without this, the model asks clarifying questions instead of giving a useful reply.
+    if not resume_text:
+        return {
+            "reply":               _NO_RESUME_REPLY,
+            "skills":              [],
+            "roles":               [],
+            "years_of_experience": None,
+            "tailored_content":    None,
+            "missing_skills":      [],
+            "matching_skills":     [],
+            "_resume_profile":     {"skills": [], "roles": []},
+        }
+
+    system = SYSTEM_PROMPT + f"\n\n[RESUME CONTEXT:\n{resume_text}\n]"
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", system),

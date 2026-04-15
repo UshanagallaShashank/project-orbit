@@ -30,6 +30,24 @@ AGENT = "job"
 
 MAX_RESULTS_PER_QUERY = 4
 
+# Skills that signal an AI-focused candidate — expand role search to AI synonyms
+_AI_SKILLS = {"langchain", "langgraph", "rag", "langsmith", "openai", "gemini", "huggingface",
+               "llm", "gpt", "embeddings", "vector", "ai", "ml", "machine learning", "deep learning",
+               "transformers", "pytorch", "tensorflow", "anthropic"}
+
+# Role synonyms used when user has AI skills — covers FAANG JD vocabulary
+_AI_ROLE_SYNONYMS = [
+    "AI Engineer",
+    "GenAI Developer",
+    "Machine Learning Engineer",
+    "LLM Engineer",
+    "Applied AI Engineer",
+]
+
+# FAANG + top AI companies to bias search toward
+_TARGET_COMPANIES = ["Google", "Meta", "Amazon", "Apple", "Microsoft",
+                     "OpenAI", "Anthropic", "Nvidia", "Databricks", "Cohere"]
+
 
 class Job(BaseModel):
     title:            str
@@ -87,38 +105,89 @@ def _ddg_search(query: str, max_results: int = MAX_RESULTS_PER_QUERY) -> list[di
 
 
 def _source_from_url(url: str) -> str:
-    if "linkedin.com" in url:
-        return "LinkedIn"
-    if "naukri.com" in url:
-        return "Naukri"
+    if "linkedin.com"    in url: return "LinkedIn"
+    if "naukri.com"      in url: return "Naukri"
+    if "indeed.com"      in url: return "Indeed"
+    if "glassdoor.com"   in url: return "Glassdoor"
+    if "wellfound.com"   in url: return "Wellfound"
+    if "internshala.com" in url: return "Internshala"
+    if "workatastartup"  in url: return "WorkAtStartup"
+    if "unstop.com"      in url: return "Unstop"
     return "Other"
 
 
-def _search_jobs(skills: list[str], roles: list[str], extra_query: str = "") -> list[dict]:
-    """Build and run job search queries, return raw DDG results."""
-    skill_str = " ".join(skills[:4]) if skills else ""
-    queries   = []
+def _has_ai_skills(skills: list[str]) -> bool:
+    """Return True if the user's skill set contains AI/ML-related technologies."""
+    lowered = {s.lower() for s in skills}
+    return bool(lowered & _AI_SKILLS)
 
-    for role in (roles[:2] if roles else ["software engineer"]):
-        if skill_str:
-            queries.append(f'site:linkedin.com/jobs "{role}" {skill_str}')
-            queries.append(f'site:naukri.com "{role}" {skill_str}')
-        else:
-            queries.append(f'site:linkedin.com/jobs "{role}"')
-            queries.append(f'site:naukri.com "{role}"')
 
-    if extra_query:
-        queries.append(f'site:linkedin.com/jobs {extra_query}')
+def _build_search_roles(skills: list[str], roles: list[str]) -> list[str]:
+    """
+    Expand the role list with AI synonyms when the user has AI skills.
+    Always put AI-specific roles first so DDG queries hit them before generic ones.
+    """
+    if _has_ai_skills(skills):
+        # Start with AI synonyms, then append the user's own stated roles (deduplicated)
+        seen = set(r.lower() for r in _AI_ROLE_SYNONYMS)
+        combined = list(_AI_ROLE_SYNONYMS)
+        for r in roles:
+            if r.lower() not in seen:
+                seen.add(r.lower())
+                combined.append(r)
+        return combined[:4]  # cap to keep query count manageable
+    return (roles[:3] if roles else ["Software Engineer"])
+
+
+def _search_jobs(skills: list[str], roles: list[str]) -> list[dict]:
+    """
+    Build and run job search queries across multiple job boards.
+    Sources: LinkedIn, Indeed, Glassdoor, Wellfound (startups), Internshala, Naukri.
+    AI-skill holders get AI/GenAI role synonyms injected.
+    """
+    search_roles = _build_search_roles(skills, roles)
+    ai_skill_str = " ".join(
+        s for s in skills if s.lower() in _AI_SKILLS
+    )[:60]
+    skill_str = ai_skill_str if ai_skill_str else " ".join(skills[:3])
+    top_role  = search_roles[0] if search_roles else "Software Engineer"
+
+    queries: list[str] = []
+
+    # LinkedIn — primary source, 2 roles
+    for role in search_roles[:2]:
+        queries.append(f'site:linkedin.com/jobs "{role}" {skill_str}')
+
+    # Indeed — broad reach
+    queries.append(f'site:indeed.com "{top_role}" {skill_str}')
+
+    # Glassdoor — company reviews + listings
+    queries.append(f'site:glassdoor.com/job-listing "{top_role}" {skill_str}')
+
+    # Wellfound — startup/AI-native companies
+    if _has_ai_skills(skills):
+        queries.append(f'site:wellfound.com/jobs "AI Engineer" OR "ML Engineer" OR "GenAI" {skill_str}')
+
+    # Naukri — India-focused market
+    queries.append(f'site:naukri.com "{top_role}" {skill_str}')
+
+    # Internshala — for fresher / early-career candidates
+    queries.append(f'site:internshala.com "{top_role}" {skill_str}')
+
+    # FAANG + top AI company targeted query on LinkedIn
+    if _has_ai_skills(skills):
+        company_str = " OR ".join(_TARGET_COMPANIES[:5])
+        queries.append(f'site:linkedin.com/jobs "AI Engineer" OR "GenAI" ({company_str})')
 
     all_results = []
     seen_urls   = set()
-    for q in queries[:4]:  # cap at 4 queries to stay fast
+    for q in queries[:7]:  # cap at 7 queries
         for r in _ddg_search(q):
             url = r.get("href", "")
             if url not in seen_urls:
                 seen_urls.add(url)
                 all_results.append(r)
-        if len(all_results) >= 10:
+        if len(all_results) >= 15:
             break
 
     return all_results
@@ -151,9 +220,22 @@ def run(user_id: str, message: str, _resume_profile: Optional[dict] = None) -> d
         skills = resume_data.get("skills", [])
         roles  = resume_data.get("roles", [])
 
-    # Step 2: search
-    search_results = _search_jobs(skills, roles, extra_query="" if (skills or roles) else message)
+    # Step 2: search (only runs when we have a profile — guardrail above ensures this)
+    search_results = _search_jobs(skills, roles)
     results_text   = _format_results_for_llm(search_results)
+
+    # Hard-coded guardrail: if no resume profile exists, return immediately.
+    # Do NOT call the LLM — without a profile it will ask clarifying questions
+    # instead of acting. The user needs to upload their resume first.
+    if not skills and not roles:
+        return {
+            "reply": (
+                "No resume on file, so I cannot match jobs to your profile. "
+                "Upload your resume on the Documents page first — "
+                "then I can search jobs that actually fit your skills."
+            ),
+            "jobs": [],
+        }
 
     if skills or roles:
         exp = resume_data.get("total_experience") or profile.get("total_experience", "")
@@ -162,7 +244,8 @@ def run(user_id: str, message: str, _resume_profile: Optional[dict] = None) -> d
             profile_parts.append(f"Experience: {exp}")
         profile_text = "\n".join(profile_parts)
     else:
-        profile_text = "No resume profile found. No resume uploaded yet."
+        # No profile but search did return results (message-based query)
+        profile_text = f"No resume profile. User is looking for: {message}"
 
     system = (
         SYSTEM_PROMPT

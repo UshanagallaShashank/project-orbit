@@ -2,7 +2,7 @@
 // Renders a single chat message with role styling, agent badges, markdown, and response stats.
 
 import { format } from 'date-fns'
-import { ExternalLink, Star } from 'lucide-react'
+import { ExternalLink, Briefcase } from 'lucide-react'
 import Markdown from 'react-markdown'
 import type { Message, AgentName } from '@/types'
 import { AgentBadge } from './AgentBadge'
@@ -81,46 +81,82 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         {/* Job results — inline cards */}
         {!isUser && message.jobs && message.jobs.length > 0 && (
           <div className="w-full max-w-full mt-1 rounded-xl border border-border bg-background/80 overflow-hidden shadow-sm">
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-amber-50 dark:bg-amber-900/10">
-              <Star className="h-3.5 w-3.5 text-amber-500" />
-              <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+            {/* Header */}
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/40">
+              <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs font-semibold text-foreground">
                 {message.jobs.length} job {message.jobs.length === 1 ? 'match' : 'matches'}
-              </p>
+              </span>
             </div>
+
+            {/* Cards */}
             <ul className="divide-y divide-border">
-              {message.jobs.map((job, i) => (
-                <li key={i} className="flex items-start gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-sm font-medium">{job.title}</span>
-                      {job.company && (
-                        <span className="text-xs text-muted-foreground">at {job.company}</span>
-                      )}
-                      {job.source && (
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium
-                          ${job.source === 'LinkedIn' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
-                          : job.source === 'Naukri' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
-                          : 'bg-muted text-muted-foreground'}`}>
-                          {job.source}
+              {message.jobs.map((job, i) => {
+                const score = job.match_score ?? 0
+                const scoreColor =
+                  score >= 8 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                  : score >= 5 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                  : 'bg-muted text-muted-foreground'
+
+                return (
+                  <li key={i} className="px-3 py-2.5 hover:bg-muted/40 transition-colors">
+                    {/* Row 1: title + score + source */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                        <span className="text-sm font-semibold leading-tight">{job.title}</span>
+                        {job.company && (
+                          <span className="text-xs text-muted-foreground shrink-0">@ {job.company}</span>
+                        )}
+                        {job.source && (
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0
+                            ${job.source === 'LinkedIn' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                            : job.source === 'Naukri' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300'
+                            : 'bg-muted text-muted-foreground'}`}>
+                            {job.source}
+                          </span>
+                        )}
+                      </div>
+                      {score > 0 && (
+                        <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md ${scoreColor}`}>
+                          {score}/10
                         </span>
                       )}
                     </div>
+
+                    {/* Row 2: snippet */}
                     {job.snippet && (
-                      <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{job.snippet}</p>
+                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2 leading-relaxed">{job.snippet}</p>
                     )}
-                  </div>
-                  {job.url && (
-                    <a
-                      href={job.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 mt-0.5 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  )}
-                </li>
-              ))}
+
+                    {/* Row 3: missing skills + apply button */}
+                    <div className="mt-1.5 flex items-center justify-between gap-2">
+                      <div className="flex flex-wrap gap-1">
+                        {job.missing_skills && job.missing_skills.length > 0 && (
+                          <>
+                            <span className="text-[10px] text-muted-foreground">Gap:</span>
+                            {job.missing_skills.slice(0, 3).map((s: string) => (
+                              <span key={s} className="text-[10px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                                {s}
+                              </span>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                      {job.url && (
+                        <a
+                          href={job.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          Apply
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           </div>
         )}

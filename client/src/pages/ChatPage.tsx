@@ -12,10 +12,14 @@ import { AgentHexagonGraph } from '@/components/chat/AgentHexagonGraph'
 import { toast } from 'sonner'
 import { useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Code2 } from 'lucide-react'
+import { Code2, AlertTriangle, RotateCcw, Download, Mail, Loader2 } from 'lucide-react'
+import { resumeApi } from '@/api/resume'
+import { useState } from 'react'
 
 export function ChatPage() {
-  const { messages, status, error, sendMessage, clearError } = useChatStore()
+  const { messages, status, error, lastFailedMessage, sendMessage, retryLastMessage, clearError } = useChatStore()
+  const [pdfLoading,   setPdfLoading]   = useState(false)
+  const [emailLoading, setEmailLoading] = useState(false)
 
   useEffect(() => {
     if (error) {
@@ -23,6 +27,35 @@ export function ChatPage() {
       clearError()
     }
   }, [error, clearError])
+
+  async function handleDownloadPdf() {
+    setPdfLoading(true)
+    try {
+      const res = await resumeApi.downloadPdf()
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a   = document.createElement('a')
+      a.href    = url
+      a.download = 'resume.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('PDF generation failed — upload your resume first')
+    } finally {
+      setPdfLoading(false)
+    }
+  }
+
+  async function handleEmailPdf() {
+    setEmailLoading(true)
+    try {
+      const res = await resumeApi.emailPdf()
+      toast.success(`Resume sent to ${res.data.to}`)
+    } catch {
+      toast.error('Email failed — check RESEND_API_KEY in server/.env')
+    } finally {
+      setEmailLoading(false)
+    }
+  }
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
 
@@ -68,6 +101,24 @@ export function ChatPage() {
           </div>
         </div>
 
+        {/* Error / retry banner */}
+        {status === 'error' && lastFailedMessage && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-red-950/40 border-b border-red-500/20 text-xs text-red-300 shrink-0">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-400" />
+            <span className="flex-1 truncate">Failed to send: "{lastFailedMessage}"</span>
+            <button
+              onClick={retryLastMessage}
+              className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/15 hover:bg-red-500/25 text-red-300 font-medium transition-colors shrink-0"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Retry
+            </button>
+            <button onClick={clearError} className="text-red-400/60 hover:text-red-300 px-1">
+              x
+            </button>
+          </div>
+        )}
+
         {/* Messages */}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <ChatWindow messages={messages} status={status} />
@@ -93,6 +144,25 @@ export function ChatPage() {
                   <Code2 className="h-3.5 w-3.5 text-indigo-400" />
                   Resume Profile
                 </CardTitle>
+                {/* PDF download + email buttons */}
+                <div className="flex gap-1.5 mt-2">
+                  <button
+                    onClick={handleDownloadPdf}
+                    disabled={pdfLoading}
+                    className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/20 disabled:opacity-50 transition-colors"
+                  >
+                    {pdfLoading ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Download className="h-2.5 w-2.5" />}
+                    PDF
+                  </button>
+                  <button
+                    onClick={handleEmailPdf}
+                    disabled={emailLoading}
+                    className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/20 disabled:opacity-50 transition-colors"
+                  >
+                    {emailLoading ? <Loader2 className="h-2.5 w-2.5 animate-spin" /> : <Mail className="h-2.5 w-2.5" />}
+                    Email
+                  </button>
+                </div>
               </CardHeader>
               <CardContent className="px-3 pb-3 space-y-2">
                 {skills.length > 0 && (

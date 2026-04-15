@@ -37,7 +37,7 @@ AGENT = "data"
 
 # -- Single response model covering all 3 data types --------------------------
 class DataAgentResponse(BaseModel):
-    reply:            str
+    reply:            str = ""   # default empty — Gemini sometimes omits it when data is obvious
     tasks:            List[str] = Field(default_factory=list, description="Tasks or todos to create")
     completed_tasks:  List[str] = Field(default_factory=list, description="Task titles the user says they finished or completed")
     entries:          List[str] = Field(default_factory=list, description="Progress entries the user logged")
@@ -62,7 +62,7 @@ TOOL_SCHEMA = make_tool_schema(
         "entries": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "Progress entries the user logged today.",
+            "description": "Progress entries the user logged today. Each entry is a plain string like 'Arrays - 2 hours LeetCode' or 'Morning run - 5km'. Never return objects or dicts.",
         },
         "memories": {
             "type": "array",
@@ -158,6 +158,19 @@ def run(user_id: str, message: str) -> dict:
         # If the model did not return structured tool output, fall back to a plain reply
         # so the app does not crash and the user still gets a response.
         return run_plain_agent(user_id, AGENT, message, prompt | llm, llm)
+
+    # Build fallback reply when the model extracted data but forgot the reply field
+    if not result.reply:
+        parts = []
+        if result.completed_tasks:
+            parts.append(f"Marked {', '.join(result.completed_tasks[:2])} as done.")
+        if result.tasks:
+            parts.append(f"Added task(s): {', '.join(result.tasks[:2])}.")
+        if result.entries:
+            parts.append(f"Logged: {', '.join(result.entries[:2])}.")
+        if result.memories:
+            parts.append(f"Saved: {', '.join(result.memories[:2])}.")
+        result.reply = " ".join(parts) if parts else "Done."
 
     save_messages(user_id, AGENT, message, result.reply)
 

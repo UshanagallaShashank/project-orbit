@@ -65,14 +65,56 @@ def get_resume_json(user=Depends(get_current_user)):
 
 @router.post("/digest")
 def send_test_digest(user=Depends(get_current_user)):
-    """
-    Manually trigger a digest email for the current user.
-    Use this to test that email delivery is working.
-    """
+    """Manually trigger a digest email for the current user."""
     from utils.daily_digest import send_digest_for_user
     user_email = user.get("email", "")
     if not user_email:
         raise HTTPException(status_code=400, detail="No email address on your account.")
 
     send_digest_for_user(user["id"], user_email)
+    return {"sent": True, "to": user_email}
+
+
+@router.post("/send-pdf")
+def email_resume_pdf(user=Depends(get_current_user)):
+    """
+    Generate the resume PDF and email it to the user's registered address.
+    Returns { sent: bool, to: str }.
+    """
+    from utils.email_sender import send_email
+
+    data = get_resume_data(user["id"])
+    if not data:
+        raise HTTPException(
+            status_code=404,
+            detail="No resume found. Upload your resume first.",
+        )
+
+    user_email = user.get("email", "")
+    if not user_email:
+        raise HTTPException(status_code=400, detail="No email address on your account.")
+
+    try:
+        pdf_bytes = generate_resume_pdf(data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}")
+
+    name     = (data.get("name") or "resume").replace(" ", "_")
+    filename = f"{name}_resume.pdf"
+
+    ok = send_email(
+        to=user_email,
+        subject=f"Your Orbit resume — {name}",
+        body_text=f"Hi {data.get('name', 'there')},\n\nYour latest resume PDF is attached.\n\n— Orbit",
+        body_html=f"<p>Hi {data.get('name', 'there')},</p><p>Your latest resume PDF is attached.</p><p>— Orbit</p>",
+        attachment_bytes=pdf_bytes,
+        attachment_filename=filename,
+    )
+
+    if not ok:
+        raise HTTPException(
+            status_code=500,
+            detail="Email not sent. Check that RESEND_API_KEY is set in server/.env",
+        )
+
     return {"sent": True, "to": user_email}

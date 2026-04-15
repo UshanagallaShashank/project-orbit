@@ -249,7 +249,16 @@ def _merge_results(results: list[dict]) -> dict:
             r["reply"] = _build_fallback_reply(r)
         return r
 
-    replies      = [r["reply"] for r in results if r.get("reply")]
+    # Deduplicate replies — when multiple agents return the same blocked message
+    # (e.g. both resume and job say "no resume on file"), show it only once.
+    seen_replies: set[str] = set()
+    unique_replies = []
+    for r in results:
+        text = r.get("reply", "").strip()
+        if text and text not in seen_replies:
+            seen_replies.add(text)
+            unique_replies.append(text)
+    replies = unique_replies
     tasks        = []
     entries      = []
     memories     = []
