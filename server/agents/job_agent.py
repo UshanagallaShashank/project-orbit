@@ -24,20 +24,22 @@ from agents.agent_factory import (
 from prompts.job_prompt import SYSTEM_PROMPT
 from utils.history import get_history, save_messages
 from utils.summarize import maybe_summarize
-from config import supabase
+from utils.resume_builder import get_resume_data
 
 AGENT = "job"
 
 MAX_RESULTS_PER_QUERY = 4
-MAX_RESUME_CHARS       = 4000
 
 
 class Job(BaseModel):
-    title:   str
-    company: str = ""
-    source:  str = ""   # "LinkedIn" | "Naukri" | "Other"
-    url:     str = ""
-    snippet: str = ""
+    title:            str
+    company:          str = ""
+    source:           str = ""   # "LinkedIn" | "Naukri" | "Other"
+    url:              str = ""
+    snippet:          str = ""
+    match_score:      int = 0    # 1-10: how well this role matches the user's profile
+    required_skills:  list[str] = Field(default_factory=list)  # skills this role needs
+    missing_skills:   list[str] = Field(default_factory=list)  # skills user lacks for this role
 
 
 class JobAgentResponse(BaseModel):
@@ -54,36 +56,23 @@ TOOL_SCHEMA = make_tool_schema(
             "items": {
                 "type": "object",
                 "properties": {
-                    "title":   {"type": "string"},
-                    "company": {"type": "string"},
-                    "source":  {"type": "string"},
-                    "url":     {"type": "string"},
-                    "snippet": {"type": "string"},
+                    "title":           {"type": "string"},
+                    "company":         {"type": "string"},
+                    "source":          {"type": "string"},
+                    "url":             {"type": "string"},
+                    "snippet":         {"type": "string"},
+                    "match_score":     {"type": "integer", "description": "1-10 match score based on user's resume profile"},
+                    "required_skills": {"type": "array", "items": {"type": "string"}, "description": "Skills this role requires"},
+                    "missing_skills":  {"type": "array", "items": {"type": "string"}, "description": "Skills user lacks for this role"},
                 },
                 "required": ["title"],
             },
-            "description": "Job listings found for the user.",
+            "description": "Job listings found for the user, scored against their resume profile.",
         }
     },
 )
 
 llm = make_llm()
-
-
-def _fetch_resume_profile(user_id: str) -> dict:
-    """Read the latest resume from documents table, return basic profile."""
-    res = (
-        supabase.table("documents")
-        .select("content")
-        .eq("user_id", user_id)
-        .order("created_at", desc=True)
-        .limit(1)
-        .execute()
-    )
-    if not res.data:
-        return {}
-    content = (res.data[0].get("content") or "")[:MAX_RESUME_CHARS]
-    return {"raw_text": content}
 
 
 def _ddg_search(query: str, max_results: int = MAX_RESULTS_PER_QUERY) -> list[dict]:
@@ -147,29 +136,33 @@ def _format_results_for_llm(results: list[dict]) -> str:
 
 
 def run(user_id: str, message: str, _resume_profile: Optional[dict] = None) -> dict:
-    # Step 1: get profile (may come from resume_agent via orchestrator merge, or fetch fresh)
+    # Step 1: get structured profile
+    # Priority: orchestrator passes it from resume_agent -> else read from [RESUME] memories
+    # WHY memories and not documents table?
+    #   resume_parser.py already extracted structured skills/roles into memories on upload.
+    #   That is much more useful than 200 chars of raw PDF text.
     profile = _resume_profile or {}
     skills  = profile.get("skills", [])
     roles   = profile.get("roles", [])
 
+    resume_data: dict = {}
     if not skills and not roles:
-        raw = _fetch_resume_profile(user_id)
-        # Use the raw text as extra query context if no structured profile yet
-        raw_text = raw.get("raw_text", "")
-        # Extract a rough query from the first 200 chars of resume
-        extra_query = raw_text[:200].replace("\n", " ") if raw_text else message
-    else:
-        extra_query = ""
+        resume_data = get_resume_data(user_id)
+        skills = resume_data.get("skills", [])
+        roles  = resume_data.get("roles", [])
 
     # Step 2: search
-    search_results = _search_jobs(skills, roles, extra_query=extra_query or message)
+    search_results = _search_jobs(skills, roles, extra_query="" if (skills or roles) else message)
     results_text   = _format_results_for_llm(search_results)
 
-    profile_text = (
-        f"Skills: {', '.join(skills)}\nRoles: {', '.join(roles)}"
-        if (skills or roles)
-        else "No resume profile available."
-    )
+    if skills or roles:
+        exp = resume_data.get("total_experience") or profile.get("total_experience", "")
+        profile_parts = [f"Skills: {', '.join(skills)}", f"Target roles: {', '.join(roles)}"]
+        if exp:
+            profile_parts.append(f"Experience: {exp}")
+        profile_text = "\n".join(profile_parts)
+    else:
+        profile_text = "No resume profile found. No resume uploaded yet."
 
     system = (
         SYSTEM_PROMPT

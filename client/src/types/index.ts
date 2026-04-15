@@ -5,10 +5,11 @@ export type AgentName =
   | 'tracker'
   | 'memory'
   | 'mentor'
-  | 'comms'
   | 'job'
   | 'resume'
   | 'mock'
+  | 'income'
+  | 'comms'
   | 'general'
 
 // Chat
@@ -73,6 +74,26 @@ export interface Memory {
   id: string
   content: string
   created_at: string
+}
+
+// Income
+
+export interface IncomeEntry {
+  id:          string
+  type:        'income' | 'expense'
+  amount:      number
+  category:    string
+  description: string
+  entry_date:  string
+  created_at:  string
+}
+
+export interface IncomeSummary {
+  month:       string
+  income:      number
+  expenses:    number
+  net:         number
+  by_category: Record<string, number>
 }
 
 // Auth

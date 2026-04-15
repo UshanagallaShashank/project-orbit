@@ -15,10 +15,12 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_KEY: str   # required - crashes if missing
     GOOGLE_API_KEY: str         # required - crashes if missing
     JWT_SECRET: str             # required - crashes if missing
-    PORT: int = 8000            # optional - defaults to 8000
+    PORT: int = 8000                   # optional - defaults to 8000
+    RESEND_API_KEY: str = ""           # optional - get free key at resend.com
 
     class Config:
         env_file = ".env"       # look for values in server/.env
+        extra   = "ignore"      # silently skip .env keys not defined above
 
 
 # Created ONCE when app starts. Imported everywhere else.

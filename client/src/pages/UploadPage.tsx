@@ -7,8 +7,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { UploadCloud, FileText, Image, Trash2, CheckCircle2 } from 'lucide-react'
+import { UploadCloud, FileText, Image, Trash2, CheckCircle2, Download } from 'lucide-react'
 import { uploadApi, type UploadedDoc } from '@/api/upload'
+import client from '@/api/client'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -34,12 +35,31 @@ function formatBytes(bytes: number) {
 }
 
 export function UploadPage() {
-  const [docs, setDocs]           = useState<UploadedDoc[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [uploading, setUploading] = useState(false)
-  const [progress, setProgress]   = useState(0)
-  const [dragging, setDragging]   = useState(false)
+  const [docs, setDocs]               = useState<UploadedDoc[]>([])
+  const [loading, setLoading]         = useState(true)
+  const [uploading, setUploading]     = useState(false)
+  const [progress, setProgress]       = useState(0)
+  const [dragging, setDragging]       = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  async function downloadResumePdf() {
+    setDownloading(true)
+    try {
+      const res = await client.get('/api/resume/pdf', { responseType: 'blob' })
+      const url  = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href     = url
+      link.download = 'resume.pdf'
+      link.click()
+      URL.revokeObjectURL(url)
+      toast.success('Resume downloaded')
+    } catch {
+      toast.error('No resume found. Upload your resume first.')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   useEffect(() => {
     uploadApi.list()
@@ -106,11 +126,23 @@ export function UploadPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-xl font-semibold">Documents</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Upload your resume or any document. Orbit will read it and let you chat about it.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold">Documents</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Upload your resume or any document. Orbit will read it and let you chat about it.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={downloadResumePdf}
+          disabled={downloading}
+          className="shrink-0 gap-2"
+        >
+          <Download className="h-4 w-4" />
+          {downloading ? 'Generating...' : 'Download Resume PDF'}
+        </Button>
       </div>
 
       {/* Drop zone */}

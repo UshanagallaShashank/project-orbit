@@ -30,9 +30,12 @@ MAX_RESUME_CHARS = 8000  # stay within token budget
 
 class ResumeAgentResponse(BaseModel):
     reply: str
-    skills: list[str] = Field(default_factory=list, description="Key skills extracted from the resume")
-    roles:  list[str] = Field(default_factory=list, description="Job titles / roles the candidate fits")
+    skills:              list[str] = Field(default_factory=list, description="Key skills extracted from the resume")
+    roles:               list[str] = Field(default_factory=list, description="Job titles / roles the candidate fits")
     years_of_experience: Optional[str] = Field(default=None, description="Total years of experience, e.g. '3 years'")
+    tailored_content:    Optional[str] = Field(default=None, description="Full tailored resume text when the user asks to customize for a role or JD")
+    missing_skills:      list[str] = Field(default_factory=list, description="Skills the JD or target role requires that are absent from the resume")
+    matching_skills:     list[str] = Field(default_factory=list, description="Skills from the resume that directly match the target role or JD")
 
 
 TOOL_SCHEMA = make_tool_schema(
@@ -52,6 +55,20 @@ TOOL_SCHEMA = make_tool_schema(
         "years_of_experience": {
             "type": "string",
             "description": "Total estimated years of experience, e.g. '3 years'.",
+        },
+        "tailored_content": {
+            "type": "string",
+            "description": "Full tailored resume text when the user asks to customize for a role or job description. Null for non-tailoring requests.",
+        },
+        "missing_skills": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Skills the target role or JD requires that are missing from the resume.",
+        },
+        "matching_skills": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Skills from the resume that directly match the target role or JD.",
         },
     },
 )
@@ -126,6 +143,9 @@ def run(user_id: str, message: str) -> dict:
         "skills":              result.skills,
         "roles":               result.roles,
         "years_of_experience": result.years_of_experience,
+        "tailored_content":    result.tailored_content,
+        "missing_skills":      result.missing_skills,
+        "matching_skills":     result.matching_skills,
         # Pass profile forward so job_agent can pick it up without re-reading the resume
         "_resume_profile": {
             "skills": result.skills,

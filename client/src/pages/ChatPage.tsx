@@ -66,7 +66,9 @@ export function ChatPage() {
           <ChatWindow messages={messages} status={status} />
         </div>
         <div className="border-t border-border bg-background/90 p-4">
-          <ChatInput status={status} onSend={sendMessage} />
+          <div className="max-w-2xl mx-auto">
+            <ChatInput status={status} onSend={sendMessage} />
+          </div>
         </div>
       </div>
 

@@ -14,11 +14,24 @@ from routes.tasks_routes import router as tasks_router
 from routes.tracker_routes import router as tracker_router
 from routes.memories_routes import router as memories_router
 from routes.upload_routes import router as upload_router
+from routes.income_routes import router as income_router
+from routes.resume_routes import router as resume_router
+from contextlib import asynccontextmanager
 
 import warnings
 warnings.filterwarnings("ignore", message="Unrecognized FinishReason")
 
-app = FastAPI(title="Project Orbit")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the daily digest scheduler in the background.
+    # It fires at 08:00 local time and emails all users their daily summary.
+    from utils.daily_digest import start_digest_scheduler
+    start_digest_scheduler()
+    yield
+
+
+app = FastAPI(title="Project Orbit", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,6 +47,8 @@ app.include_router(tasks_router,    prefix="/api/tasks",    tags=["Tasks"])
 app.include_router(tracker_router,  prefix="/api/tracker",  tags=["Tracker"])
 app.include_router(memories_router, prefix="/api/memories", tags=["Memories"])
 app.include_router(upload_router,   prefix="/api/upload",   tags=["Upload"])
+app.include_router(income_router,   prefix="/api/income",   tags=["Income"])
+app.include_router(resume_router,   prefix="/api/resume",   tags=["Resume"])
 
 
 @app.get("/health")

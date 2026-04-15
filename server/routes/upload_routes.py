@@ -18,6 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
 from config import supabase
 from middleware import get_current_user
+from utils.resume_parser import parse_and_store
 
 router = APIRouter()
 
@@ -89,6 +90,13 @@ async def upload_document(
     }
 
     supabase.table("documents").insert(doc).execute()
+
+    # Auto-summarize resumes and store key facts in memories.
+    # Runs in background - does not block the upload response.
+    # Only runs for text-extractable files (PDF, DOCX, plain text).
+    # Skips image placeholders.
+    if not content.startswith("[Image file:") and not content.startswith("[PDF with no extractable text]"):
+        parse_and_store(user_id, content)
 
     return {
         "id":         doc["id"],

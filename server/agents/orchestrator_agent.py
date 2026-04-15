@@ -24,7 +24,7 @@ from prompts.orchestrator_prompt import SYSTEM_PROMPT
 
 AGENT = "orchestrator"
 
-AgentName = Literal["task", "mentor", "tracker", "comms", "memory", "job", "resume", "mock", "general"]
+AgentName = Literal["task", "mentor", "tracker", "memory", "job", "resume", "mock", "income", "general"]
 
 
 # -- Router chain --------------------------------------------------------------
@@ -41,7 +41,7 @@ ROUTER_TOOL_SCHEMA = make_tool_schema(
             "type": "array",
             "items": {
                 "type": "string",
-                "enum": ["task", "mentor", "tracker", "comms", "memory", "job", "resume", "mock", "general"],
+                "enum": ["task", "mentor", "tracker", "memory", "job", "resume", "mock", "income", "general"],
             },
             "description": "List of agents that should handle this message (1-3 items).",
         }
@@ -68,6 +68,48 @@ _general_prompt = ChatPromptTemplate.from_messages([
 _general_chain = _general_prompt | _general_llm
 
 
+# -- Context builder -----------------------------------------------------------
+
+def _build_agent_context(results: list[dict]) -> str:
+    """
+    Build a short context string from completed agent results.
+    Passed to subsequent agents so they know what earlier agents found.
+
+    Example: resume ran first, extracted skills -> job agent gets them in context
+    instead of re-reading the resume.
+    """
+    lines = []
+    for r in results:
+        agent = r.get("agent_used", "")
+        if agent == "resume":
+            skills = r.get("skills", [])
+            roles  = r.get("roles", [])
+            if skills:
+                lines.append(f"Resume skills: {', '.join(skills[:8])}")
+            if roles:
+                lines.append(f"Target roles: {', '.join(roles[:3])}")
+        elif agent == "job":
+            jobs = r.get("jobs", [])
+            if jobs:
+                lines.append(f"Top job match: {jobs[0].get('title', '')} at {jobs[0].get('company', '')}")
+        elif agent in ("task", "tracker", "memory", "data"):
+            tasks    = r.get("tasks", [])
+            entries  = r.get("entries", [])
+            memories = r.get("memories", [])
+            if tasks:
+                lines.append(f"Tasks added: {', '.join(tasks[:3])}")
+            if entries:
+                names = [e.get("topic", e) if isinstance(e, dict) else str(e) for e in entries[:3]]
+                lines.append(f"Progress logged: {', '.join(names)}")
+            if memories:
+                lines.append(f"Saved: {', '.join(memories[:2])}")
+        elif agent == "income":
+            reply_snippet = r.get("reply", "")[:80]
+            if reply_snippet:
+                lines.append(f"Income summary: {reply_snippet}")
+    return "\n".join(lines)
+
+
 # -- Routing table -------------------------------------------------------------
 # Add one line here when each new agent is built.
 # Import lazily inside run() to avoid circular imports at module load.
@@ -90,6 +132,11 @@ def _get_routes():
     try:
         from agents import job_agent
         routes["job"] = job_agent.run
+    except ImportError:
+        pass
+    try:
+        from agents import income_agent
+        routes["income"] = income_agent.run
     except ImportError:
         pass
     return routes
@@ -172,12 +219,22 @@ def run(user_id: str, message: str) -> dict:
         handler = routes.get(name)
         if handler:
             try:
+                # Build context from agents that have already run this turn
+                prior_context = _build_agent_context(results)
+
+                # Pass prior context by appending to the message so downstream
+                # agents (mentor, job) know what earlier agents found
+                enriched_message = (
+                    message + f"\n\n[Context from this session:\n{prior_context}]"
+                    if prior_context else message
+                )
+
                 # If job_agent runs after resume_agent, pass the extracted profile
                 # so job_agent doesn't need to re-read the resume
                 if name == "job" and resume_profile is not None:
-                    result = handler(user_id=user_id, message=message, _resume_profile=resume_profile)
+                    result = handler(user_id=user_id, message=enriched_message, _resume_profile=resume_profile)
                 else:
-                    result = handler(user_id=user_id, message=message)
+                    result = handler(user_id=user_id, message=enriched_message)
 
                 # Capture resume profile for downstream agents
                 if name == "resume" and "_resume_profile" in result:

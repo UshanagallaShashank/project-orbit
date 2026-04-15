@@ -220,7 +220,7 @@ def fetch_user_context(user_id: str) -> str:
         entries = [r["content"] for r in tracker_res.data]
         sections.append("Recent progress:\n" + "\n".join(f"- {e}" for e in entries))
 
-    # All saved memories (these are persistent facts - fetch all)
+    # All saved memories - split into resume profile and general facts
     memory_res = (
         supabase.table("memories")
         .select("content")
@@ -229,8 +229,17 @@ def fetch_user_context(user_id: str) -> str:
         .execute()
     )
     if memory_res.data:
-        facts = [r["content"] for r in memory_res.data]
-        sections.append("What I know about you:\n" + "\n".join(f"- {f}" for f in facts))
+        all_memories = [r["content"] for r in memory_res.data]
+        resume_facts  = [m for m in all_memories if m.startswith("[RESUME]")]
+        general_facts = [m for m in all_memories if not m.startswith("[RESUME]")]
+
+        if resume_facts:
+            # Strip the [RESUME] tag so the prompt reads cleanly
+            clean = [m[len("[RESUME] "):] for m in resume_facts]
+            sections.append("Resume profile:\n" + "\n".join(f"- {f}" for f in clean))
+
+        if general_facts:
+            sections.append("What I know about you:\n" + "\n".join(f"- {f}" for f in general_facts))
 
     if not sections:
         return ""

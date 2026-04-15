@@ -15,6 +15,7 @@ import { TasksPage }     from '@/pages/TasksPage'
 import { TrackerPage }   from '@/pages/TrackerPage'
 import { MemoriesPage }  from '@/pages/MemoriesPage'
 import { UploadPage }    from '@/pages/UploadPage'
+import { IncomePage }   from '@/pages/IncomePage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -86,6 +87,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AppLayout><UploadPage /></AppLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/income"
+          element={
+            <ProtectedRoute>
+              <AppLayout><IncomePage /></AppLayout>
             </ProtectedRoute>
           }
         />

@@ -26,4 +26,7 @@ class ChatRequest(BaseModel):
 
 @router.post("")
 def chat(body: ChatRequest, user=Depends(get_current_user)):
-    return orchestrator.run(user_id=user["id"], message=body.message)
+    return orchestrator.run(
+        user_id=user["id"],
+        message=body.message,
+    )

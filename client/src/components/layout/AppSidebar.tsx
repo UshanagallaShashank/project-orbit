@@ -11,6 +11,7 @@ import {
   Orbit,
   SquarePen,
   LogOut,
+  Wallet,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
   { to: '/tracker',   label: 'Tracker',   icon: Activity       },
   { to: '/memories',  label: 'Memories',  icon: BookMarked     },
   { to: '/upload',    label: 'Documents', icon: Upload         },
+  { to: '/income',    label: 'Income',    icon: Wallet         },
 ]
 
 export function AppSidebar() {
