@@ -17,6 +17,7 @@ from orbit.api.learning_routes import learning_router
 from orbit.api.leetcode_routes import leetcode_router
 from orbit.api.memory_routes import memory_router
 from orbit.api.model_routes import model_router_api
+from orbit.api.proactive_routes import proactive_router
 from orbit.api.project_tracker_routes import project_tracker_router
 from orbit.api.prompt_lab_routes import prompt_lab_router
 from orbit.api.resume_routes import resume_router
@@ -27,7 +28,7 @@ from orbit.utils.logger import get_logger
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 logger = get_logger("orbit")
 
-app = FastAPI(title="Project Orbit", version="0.2.0-full")
+app = FastAPI(title="Project Orbit", version="0.3.0-proactive")
 app.include_router(health_router)
 app.include_router(agent_router)
 app.include_router(model_router_api)
@@ -46,5 +47,6 @@ app.include_router(job_router)
 app.include_router(feature_router)
 app.include_router(sandbox_router)
 app.include_router(prompt_lab_router)
+app.include_router(proactive_router)
 
 logger.info("Orbit backend ready")
