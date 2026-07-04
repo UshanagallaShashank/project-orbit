@@ -21,17 +21,17 @@ export function OrbitApp() {
   const [active, setActive] = useState<TabName>('Today');
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Orbit</h1>
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-gray-900">Orbit</h1>
           <BackendStatus />
         </div>
       </header>
 
       <TabBar active={active} onSelect={setActive} />
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-8 py-6">
         {TABS.map((name) => {
           const Tab = TAB_CONTENT[name];
           return (

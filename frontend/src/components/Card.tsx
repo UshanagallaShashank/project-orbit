@@ -12,8 +12,8 @@ export function Card({ children, hoverable, noBorder, className = '', ...props }
       className={`${
         noBorder
           ? 'bg-transparent'
-          : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6'
-      } ${hoverable ? 'hover:shadow-md cursor-pointer transition-shadow' : ''} ${className}`}
+          : 'bg-white border border-gray-200 rounded p-4'
+      } ${hoverable ? 'hover:shadow-sm cursor-pointer transition-shadow' : ''} ${className}`}
       {...props}
     >
       {children}
