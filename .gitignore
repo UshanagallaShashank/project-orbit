@@ -11,6 +11,20 @@ client/.turbo/
 client/coverage/
 client/*.tsbuildinfo
 
+# Frontend (root layout)
+node_modules/
+frontend/dist/
+frontend/dev-dist/
+
+# Backend (Python, root layout)
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+uv.lock
+
 # Backend (Python)
 server/__pycache__/
 server/*.py[cod]
@@ -84,3 +98,6 @@ yarn-error.log*
 .next/
 out/
 *.pem
+
+# Claude Code local settings
+.claude/

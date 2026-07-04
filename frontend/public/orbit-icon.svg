@@ -1,0 +1,7 @@
+<!-- App icon showing a planet with an orbit ring -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0a0a0a" />
+  <circle cx="256" cy="256" r="96" fill="#22c55e" />
+  <ellipse cx="256" cy="256" rx="190" ry="70" fill="none" stroke="#e5e5e5" stroke-width="16" transform="rotate(-20 256 256)" />
+  <circle cx="415" cy="185" r="22" fill="#e5e5e5" />
+</svg>

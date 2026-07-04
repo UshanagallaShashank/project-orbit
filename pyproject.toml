@@ -1,0 +1,28 @@
+# Project metadata, pinned Python version, and dependencies for the Orbit backend
+[project]
+name = "project-orbit"
+version = "0.1.0"
+description = "Personal multi-agent AI assistant with LangGraph orchestration"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.34",
+    "langgraph>=0.4",
+    "langchain>=0.3",
+    "supabase>=2.15",
+    "python-dotenv>=1.1",
+    "httpx>=0.28",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "mypy>=1.15",
+    "ruff>=0.11",
+]
+
+[tool.mypy]
+strict = true
+
+[tool.ruff]
+line-length = 100
