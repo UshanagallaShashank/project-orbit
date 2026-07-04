@@ -17,16 +17,17 @@ export function Card({
   return (
     <motion.div
       className={`
-        rounded-xl p-5 transition-all duration-200
+        rounded-2xl transition-all duration-300
         ${
           noBorder
             ? 'bg-transparent'
-            : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800'
+            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md'
         }
-        ${hoverable ? 'hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer' : 'shadow-xs'}
+        ${hoverable ? 'hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer' : ''}
         ${className}
       `}
-      whileHover={hoverable ? { y: -2 } : undefined}
+      style={{ padding: noBorder ? undefined : '24px' }}
+      whileHover={hoverable ? { y: -4 } : undefined}
       {...(props as any)}
     >
       {children}
