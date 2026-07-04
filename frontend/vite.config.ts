@@ -26,6 +26,7 @@ export default defineConfig({
       "/health": "http://localhost:8000",
       "/agents": "http://localhost:8000",
       "/models": "http://localhost:8000",
+      "/expenses": "http://localhost:8000",
     },
   },
 });

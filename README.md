@@ -101,6 +101,10 @@ Once the backend is running, open http://localhost:8000/docs and try `POST /mode
 
 To run the dashboard, open a second terminal: `cd frontend && npm install && npm run dev`, then visit http://localhost:5173. See [frontend/README.md](frontend/README.md) for details.
 
+## Database setup
+
+Run each SQL file in [supabase_migrations/](supabase_migrations/) once in your Supabase project's SQL editor (Dashboard, SQL Editor, paste, Run). Currently just `create_expenses_table.sql`.
+
 ## Environment variables
 
 See [.env.example](.env.example) for the full template. Never commit the real `.env`.
@@ -120,7 +124,7 @@ See [.env.example](.env.example) for the full template. Never commit the real `.
 |---|---|---|
 | 1 | LangGraph skeleton + ModelRouter (xAI/Gemini swap test) | Done |
 | 2 | PWA shell (React + Tailwind + tabs) | Done |
-| 3 | ExpenseAgent (voice + manual) | Stub |
+| 3 | ExpenseAgent (voice + manual) | Manual done, voice pending |
 | 4 | LearningTracker | Stub |
 | 5 | ResumeAgent | Stub |
 | 6 | MemoryAgent (Supabase + pgvector) | Stub |
