@@ -1,27 +1,30 @@
-// Manual expense entry form that posts to the backend and refreshes the list
+// Manual expense entry form with custom categories, posts to the backend and refreshes
 import { useState, type FormEvent } from "react";
 
-const CATEGORIES = ["food", "transport", "rent", "shopping", "health", "entertainment", "other"];
+const DEFAULT_CATEGORIES = ["food", "transport", "rent", "shopping", "health", "entertainment", "other"];
 
-type ExpenseFormProps = { onSaved: () => void };
+type ExpenseFormProps = { onSaved: () => void; knownCategories: string[] };
 
-export function ExpenseForm({ onSaved }: ExpenseFormProps) {
+export function ExpenseForm({ onSaved, knownCategories }: ExpenseFormProps) {
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("food");
+  const [category, setCategory] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const suggestions = [...new Set([...DEFAULT_CATEGORIES, ...knownCategories])].sort();
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    const cleanCategory = category.trim().toLowerCase() || "other";
     if (!amount || Number(amount) <= 0) return;
     setSaving(true);
     await fetch("/expenses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: Number(amount), category, note }),
+      body: JSON.stringify({ amount: Number(amount), category: cleanCategory, note }),
     }).catch(() => null);
     setSaving(false);
     setAmount("");
+    setCategory("");
     setNote("");
     onSaved();
   };
@@ -40,19 +43,20 @@ export function ExpenseForm({ onSaved }: ExpenseFormProps) {
         />
       </label>
       <label className="flex flex-col gap-1 text-xs text-neutral-400">
-        Category
-        <select
+        Category (pick or type a new one)
+        <input
+          list="category-options"
           value={category}
           onChange={(event) => setCategory(event.target.value)}
-          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
-        >
-          {CATEGORIES.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
+          className="w-52 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+          placeholder="food, ai tools, anything"
+        />
       </label>
+      <datalist id="category-options">
+        {suggestions.map((name) => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>
       <label className="flex grow flex-col gap-1 text-xs text-neutral-400">
         Note
         <input

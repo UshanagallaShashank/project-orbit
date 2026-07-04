@@ -6,7 +6,7 @@ from orbit.types.shared import ModelRole
 
 PARSE_PROMPT = """You are an expense parser. Extract the expense from the user's text.
 Respond with only a JSON object, no other text, in this exact shape:
-{"amount": <number in INR>, "category": "<one of: food, transport, rent, shopping, health, entertainment, other>", "note": "<short description>"}
+{"amount": <number in INR>, "category": "<a short lowercase label such as food, transport, rent, shopping, health, entertainment - invent a fitting one like 'ai tools' when none match>", "note": "<short description>"}
 
 Example input: spent 250 on lunch at the mess
 Example output: {"amount": 250, "category": "food", "note": "lunch at the mess"}

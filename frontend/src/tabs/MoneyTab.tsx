@@ -14,7 +14,7 @@ export function MoneyTab() {
       {expenses.length > 0 && <CategoryBreakdown expenses={expenses} />}
       <section>
         <h2 className="mb-2 text-sm font-semibold text-neutral-200">Add an expense</h2>
-        <ExpenseForm onSaved={reload} />
+        <ExpenseForm onSaved={reload} knownCategories={[...new Set(expenses.map((expense) => expense.category))]} />
       </section>
       <section>
         <h2 className="mb-2 text-sm font-semibold text-neutral-200">Recent expenses</h2>
