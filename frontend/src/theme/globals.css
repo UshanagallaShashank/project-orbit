@@ -1,12 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
   /* Color tokens - Light theme */
-  --color-bg: #fafbfc;
-  --color-surface: #ffffff;
+  --color-bg: #ffffff;
+  --color-surface: #f8fafc;
   --color-border: #e2e8f0;
   --color-text-primary: #0f172a;
-  --color-text-secondary: #64748b;
+  --color-text-secondary: #475569;
   --color-text-tertiary: #94a3b8;
 
   /* Semantic colors */
@@ -82,12 +82,13 @@ html {
 
 body {
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.6;
   color: var(--color-text-primary);
   background-color: var(--color-bg);
   transition: background-color var(--transition-base), color var(--transition-base);
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
+  font-weight: 400;
 }
 
 #root {
