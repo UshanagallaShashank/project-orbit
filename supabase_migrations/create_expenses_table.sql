@@ -6,3 +6,6 @@ create table if not exists expenses (
   note text not null default '',
   created_at timestamptz not null default now()
 );
+
+-- Single-user personal app: the backend talks to Supabase with the service role key, so RLS is off
+alter table expenses disable row level security;
