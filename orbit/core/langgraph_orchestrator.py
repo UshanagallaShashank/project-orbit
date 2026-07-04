@@ -16,6 +16,10 @@ from orbit.agents.memory_agent.memory_agent import MemoryAgent
 from orbit.agents.project_tracker.project_tracker import ProjectTracker
 from orbit.agents.resume_agent.resume_agent import ResumeAgent
 from orbit.agents.task_agent.task_agent import TaskAgent
+from orbit.agents.feature_agent.feature_agent import FeatureAgent
+from orbit.agents.job_agent.job_agent import JobAgent
+from orbit.agents.prompt_lab.prompt_lab import PromptLab
+from orbit.agents.sandbox_agent.sandbox_agent import SandboxAgent
 from orbit.types.shared import AgentName
 
 
