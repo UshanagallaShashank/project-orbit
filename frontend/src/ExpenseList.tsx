@@ -13,8 +13,14 @@ export function ExpenseList({ expenses }: ExpenseListProps) {
         >
           <div className="flex flex-col">
             <span className="text-sm text-neutral-200">{expense.note || expense.category}</span>
-            <span className="text-xs text-neutral-500">
-              {expense.category} - {new Date(expense.created_at).toLocaleDateString("en-IN")}
+            <span className="text-xs capitalize text-neutral-500">
+              {expense.category} -{" "}
+              {new Date(expense.created_at).toLocaleString("en-IN", {
+                day: "numeric",
+                month: "short",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
             </span>
           </div>
           <span className="text-sm font-medium text-red-400">
