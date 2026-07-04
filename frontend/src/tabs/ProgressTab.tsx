@@ -1,15 +1,12 @@
 import { useCallback, useState } from 'react';
-import { motion } from 'framer-motion';
 import { LearningEntryForm } from '../LearningEntryForm';
 import { LearningEntryList } from '../LearningEntryList';
 import { SearchBar } from '../SearchBar';
 import { useLearningEntries } from '../useLearningEntries';
 import { Card } from '../components/Card';
-import { BookOpen } from 'lucide-react';
 
 const TRACKS = ['', 'dsa', 'core_ml', 'modern_ai', 'sysdesign'];
 const STATUSES = ['', 'not_started', 'in_progress', 'done'];
-
 
 export function ProgressTab() {
   const { entries, reload, search, setStatus, remove } = useLearningEntries();
@@ -20,7 +17,6 @@ export function ProgressTab() {
     [search, track, status],
   );
 
-  // Calculate progress stats
   const stats = {
     total: entries.length,
     done: entries.filter((e) => e.status === 'done').length,
@@ -30,63 +26,51 @@ export function ProgressTab() {
   const progressPercent = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
 
   return (
-    <motion.div className="space-y-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      {/* Header with stats */}
+    <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Learning Progress</h2>
-        <p className="text-slate-600 dark:text-slate-400 mb-6">Track your progress across learning tracks</p>
-
-        {/* Progress overview */}
-        {stats.total > 0 && (
-          <motion.div
-            className="grid grid-cols-3 gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Card>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-                  {progressPercent}%
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Overall Progress</p>
-              </div>
-            </Card>
-            <Card>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.done}</div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Completed</p>
-              </div>
-            </Card>
-            <Card>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                  {stats.inProgress}
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">In Progress</p>
-              </div>
-            </Card>
-          </motion.div>
-        )}
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Learning Progress</h2>
+        <p className="text-gray-600">Track your progress across learning tracks</p>
       </div>
 
-      {/* Add entry form */}
-      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Log a topic</h3>
-        <LearningEntryForm onSaved={reload} />
-      </motion.section>
+      {stats.total > 0 && (
+        <div className="grid grid-cols-3 gap-4">
+          <Card>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-gray-900">{progressPercent}%</div>
+              <p className="text-xs text-gray-600 mt-1">Overall Progress</p>
+            </div>
+          </Card>
+          <Card>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">{stats.done}</div>
+              <p className="text-xs text-gray-600 mt-1">Completed</p>
+            </div>
+          </Card>
+          <Card>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600">{stats.inProgress}</div>
+              <p className="text-xs text-gray-600 mt-1">In Progress</p>
+            </div>
+          </Card>
+        </div>
+      )}
 
-      {/* Search and filters */}
-      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Filter entries</h3>
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Log a topic</h3>
+        <LearningEntryForm onSaved={reload} />
+      </section>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Filter entries</h3>
         <div className="space-y-3">
           <SearchBar placeholder="Search by topic..." onSearch={onSearch}>
             <select
               value={track}
-              onChange={(event) => {
-                setTrack(event.target.value);
-                search('', event.target.value, status);
+              onChange={(e) => {
+                setTrack(e.target.value);
+                search('', e.target.value, status);
               }}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500"
+              className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
             >
               {TRACKS.map((name) => (
                 <option key={name} value={name}>
@@ -96,37 +80,40 @@ export function ProgressTab() {
             </select>
             <select
               value={status}
-              onChange={(event) => {
-                setStatusFilter(event.target.value);
-                search('', track, event.target.value);
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                search('', track, e.target.value);
               }}
-              className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500"
+              className="rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
             >
               {STATUSES.map((name) => (
                 <option key={name} value={name}>
-                  {name ? name.replace('_', ' ').charAt(0).toUpperCase() + name.replace('_', ' ').slice(1) : 'All statuses'}
+                  {name ? name.replace('_', ' ') : 'All statuses'}
                 </option>
               ))}
             </select>
           </SearchBar>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Entries list */}
-      <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Entries</h3>
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Entries</h3>
         {entries.length === 0 ? (
-          <Card className="border-2 border-dashed border-slate-300 dark:border-slate-700 p-8 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
-              <BookOpen className="text-blue-600 dark:text-blue-400" />
+          <Card>
+            <div className="text-center py-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-4">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C6.5 6.253 2 10.998 2 17s4.5 10.747 10 10.747c5.5 0 10-4.998 10-10.747 0-6.002-4.5-10.747-10-10.747z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No study progress yet</h3>
+              <p className="text-gray-600">Log your first topic above to start tracking your learning journey.</p>
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No study progress yet</h3>
-            <p className="text-slate-600 dark:text-slate-400">Log your first topic above to start tracking your learning journey.</p>
           </Card>
         ) : (
           <LearningEntryList entries={entries} onStatusChange={setStatus} onDelete={remove} />
         )}
-      </motion.section>
-    </motion.div>
+      </section>
+    </div>
   );
 }
