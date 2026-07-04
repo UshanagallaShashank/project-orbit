@@ -5,7 +5,10 @@ from langgraph.graph import END, START, StateGraph
 
 from orbit.core.llm_client import invoke_prompt, trace_orbit
 
+from orbit.agents.cost_agent.cost_agent import CostAgent
+from orbit.agents.eval_agent.eval_agent import EvalAgent
 from orbit.agents.expense_agent.expense_agent import ExpenseAgent
+from orbit.agents.idea_agent.idea_agent import IdeaAgent
 from orbit.agents.learning_tracker.learning_tracker_agent import LearningTrackerAgent
 from orbit.agents.memory_agent.memory_agent import MemoryAgent
 from orbit.agents.resume_agent.resume_agent import ResumeAgent
@@ -38,6 +41,21 @@ def run_memory(state: OrbitState) -> OrbitState:
     return {**state, "result": MemoryAgent().run(state["request"])}
 
 
+@trace_orbit
+def run_cost(state: OrbitState) -> OrbitState:
+    return {**state, "result": CostAgent().run(state["request"])}
+
+
+@trace_orbit
+def run_eval(state: OrbitState) -> OrbitState:
+    return {**state, "result": EvalAgent().run(state["request"])}
+
+
+@trace_orbit
+def run_idea(state: OrbitState) -> OrbitState:
+    return {**state, "result": IdeaAgent().run(state["request"])}
+
+
 def detect_agents(request: str) -> list[AgentName]:
     normalized = request.lower()
     selected: list[AgentName] = []
@@ -49,6 +67,12 @@ def detect_agents(request: str) -> list[AgentName]:
         selected.append(AgentName.RESUME)
     if any(keyword in normalized for keyword in ["remember", "memory", "note", "save this", "recall"]):
         selected.append(AgentName.MEMORY)
+    if any(keyword in normalized for keyword in ["cost", "spend", "budget", "expense", "price", "money"]):
+        selected.append(AgentName.COST)
+    if any(keyword in normalized for keyword in ["eval", "score", "rate", "judge", "quality", "review"]):
+        selected.append(AgentName.EVAL)
+    if any(keyword in normalized for keyword in ["idea", "brainstorm", "feature", "suggest", "propose"]):
+        selected.append(AgentName.IDEA)
     return list(dict.fromkeys(selected))
 
 
@@ -59,6 +83,9 @@ Agents:
 - expense: records expense entries and spending information
 - resume: saves resume content or resume versions
 - memory: stores long-term memory or general notes
+- cost: tracks spending, budget, AI costs
+- eval: scores agent outputs, judges quality
+- idea: brainstorms features and project ideas
 
 Choose exactly one agent name from the list above that best matches the user request.
 Respond with only the agent name, no extra explanation.
@@ -112,6 +139,12 @@ def run_multi(state: OrbitState) -> OrbitState:
             results.append(ResumeAgent().run(state["request"]))
         elif agent == AgentName.MEMORY:
             results.append(MemoryAgent().run(state["request"]))
+        elif agent == AgentName.COST:
+            results.append(CostAgent().run(state["request"]))
+        elif agent == AgentName.EVAL:
+            results.append(EvalAgent().run(state["request"]))
+        elif agent == AgentName.IDEA:
+            results.append(IdeaAgent().run(state["request"]))
     return {**state, "result": "\n".join(results)}
 
 
@@ -128,6 +161,9 @@ def build_orbit_graph() -> StateGraph[OrbitState]:
     graph.add_node(AgentName.EXPENSE, run_expense)
     graph.add_node(AgentName.RESUME, run_resume)
     graph.add_node(AgentName.MEMORY, run_memory)
+    graph.add_node(AgentName.COST, run_cost)
+    graph.add_node(AgentName.EVAL, run_eval)
+    graph.add_node(AgentName.IDEA, run_idea)
     graph.add_node(AgentName.MULTI, run_multi)
     graph.add_node(AgentName.AUTO, route_to_agent)
     graph.add_conditional_edges(START, route_to_agent)

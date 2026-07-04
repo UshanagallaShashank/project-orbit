@@ -7,6 +7,9 @@ class AgentName(StrEnum):
     EXPENSE = "expense"
     RESUME = "resume"
     MEMORY = "memory"
+    COST = "cost"
+    EVAL = "eval"
+    IDEA = "idea"
     MULTI = "multi"
     AUTO = "auto"
 
