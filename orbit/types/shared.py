@@ -12,6 +12,8 @@ class AgentName(StrEnum):
     IDEA = "idea"
     LEETCODE = "leetcode"
     PROJECT_TRACKER = "project_tracker"
+    TASK = "task"
+    COMMS = "comms"
     MULTI = "multi"
     AUTO = "auto"
 
