@@ -18,22 +18,22 @@ export function MoneyTab() {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.1 },
+      transition: { staggerChildren: 0.08, delayChildren: 0.05 },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
+    hidden: { opacity: 0, y: 16 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   };
 
   return (
-    <motion.div className="space-y-8" variants={containerVariants} initial="hidden" animate="show">
+    <motion.div className="space-y-10" variants={containerVariants} initial="hidden" animate="show">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Expenses</h2>
-        <p className="text-slate-600 dark:text-slate-400">Track your spending against your budget</p>
-      </div>
+      <motion.div variants={itemVariants}>
+        <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Expenses</h2>
+        <p className="text-slate-600 dark:text-slate-400 font-medium">Track spending against your ₹75,000 monthly budget</p>
+      </motion.div>
 
       {/* Budget summary */}
       {summary && (
@@ -51,44 +51,55 @@ export function MoneyTab() {
 
       {/* Add expense form */}
       <motion.section variants={itemVariants}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Add an expense</h3>
+        <div className="mb-5">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Add an expense</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Log a new expense by typing naturally</p>
+        </div>
         <ExpenseForm onSaved={reload} knownCategories={[...new Set(expenses.map((e) => e.category))]} />
       </motion.section>
 
       {/* Search */}
       <motion.section variants={itemVariants}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Search expenses</h3>
-        <SearchBar placeholder="Search by note..." onSearch={onSearch}>
-          <select
-            value={category}
-            onChange={(event) => {
-              setCategory(event.target.value);
-              search('', event.target.value);
-            }}
-            className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-green-500"
-          >
-            <option value="">All categories</option>
-            {[...new Set(expenses.map((e) => e.category))].map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </SearchBar>
+        <div className="mb-5">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Filter expenses</h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Search by note or category</p>
+        </div>
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <SearchBar placeholder="Search by note..." onSearch={onSearch} />
+          </div>
+          <div className="w-48">
+            <select
+              value={category}
+              onChange={(event) => {
+                setCategory(event.target.value);
+                search('', event.target.value);
+              }}
+              className="w-full rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
+            >
+              <option value="">All categories</option>
+              {[...new Set(expenses.map((e) => e.category))].map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </motion.section>
 
       {/* Expense list */}
       <motion.section variants={itemVariants}>
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Recent expenses</h3>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-5">Recent expenses</h3>
         {expenses.length === 0 ? (
-          <Card className="border-2 border-dashed border-slate-300 dark:border-slate-700 p-8 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900 mb-4">
-              <Wallet className="text-green-600 dark:text-green-400" />
+          <Card className="border-2 border-dashed border-slate-300 dark:border-slate-700 p-12 text-center">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 mb-4">
+              <Wallet className="text-emerald-600 dark:text-emerald-400" size={28} />
             </div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
               No expenses logged yet
             </h3>
-            <p className="text-slate-600 dark:text-slate-400">
+            <p className="text-slate-600 dark:text-slate-400 max-w-xs mx-auto">
               Add your first expense above to start tracking your spending against your ₹75,000 monthly budget.
             </p>
           </Card>

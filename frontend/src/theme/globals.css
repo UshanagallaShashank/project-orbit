@@ -1,19 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
   /* Color tokens - Light theme */
-  --color-bg: #ffffff;
-  --color-surface: #f9fafb;
-  --color-border: #e5e7eb;
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-tertiary: #9ca3af;
+  --color-bg: #fafbfc;
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #64748b;
+  --color-text-tertiary: #94a3b8;
 
   /* Semantic colors */
   --color-success: #10b981;
   --color-warning: #f97316;
   --color-danger: #ef4444;
-  --color-info: #3b82f6;
+  --color-info: #0ea5e9;
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -43,11 +43,11 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --color-bg: #0f172a;
-    --color-surface: #1a1f3a;
-    --color-border: #2d3748;
-    --color-text-primary: #f3f4f6;
-    --color-text-secondary: #9ca3af;
-    --color-text-tertiary: #6b7280;
+    --color-surface: #1e293b;
+    --color-border: #334155;
+    --color-text-primary: #f1f5f9;
+    --color-text-secondary: #cbd5e1;
+    --color-text-tertiary: #94a3b8;
   }
 }
 
@@ -82,12 +82,12 @@ html {
 
 body {
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   color: var(--color-text-primary);
   background-color: var(--color-bg);
-  transition: background-color var(--transition-base),
-              color var(--transition-base);
+  transition: background-color var(--transition-base), color var(--transition-base);
+  letter-spacing: -0.01em;
 }
 
 #root {
