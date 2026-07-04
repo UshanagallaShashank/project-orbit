@@ -1,4 +1,4 @@
-// Status pill that polls the backend health endpoint every five seconds
+// Status pill that checks the backend health endpoint every thirty seconds
 import { useEffect, useState } from "react";
 
 export function BackendStatus() {
@@ -9,7 +9,7 @@ export function BackendStatus() {
         .then((response) => setOnline(response.ok))
         .catch(() => setOnline(false));
     void check();
-    const timer = setInterval(check, 5000);
+    const timer = setInterval(check, 30000);
     return () => clearInterval(timer);
   }, []);
   return (

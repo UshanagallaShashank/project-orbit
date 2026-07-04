@@ -1,6 +1,6 @@
 # Orbit Frontend
 
-The installable PWA dashboard shell: React + Vite + TypeScript + Tailwind, six tabs, and a status pill that polls the backend every five seconds.
+The installable PWA dashboard shell: React + Vite + TypeScript + Tailwind, six tabs, and a status pill that checks the backend every thirty seconds.
 
 ## Run it
 

@@ -1,4 +1,4 @@
-// Hook that loads expenses and the monthly summary from the backend every five seconds
+// Hook that loads expenses and the monthly summary once, with a manual reload after changes
 import { useCallback, useEffect, useState } from "react";
 
 export type Expense = { id: number; amount: number; category: string; note: string; created_at: string };
@@ -19,8 +19,6 @@ export function useExpenses() {
   }, []);
   useEffect(() => {
     reload();
-    const timer = setInterval(reload, 5000);
-    return () => clearInterval(timer);
   }, [reload]);
   return { expenses, summary, reload };
 }
