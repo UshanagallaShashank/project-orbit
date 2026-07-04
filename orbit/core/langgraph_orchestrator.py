@@ -10,7 +10,9 @@ from orbit.agents.eval_agent.eval_agent import EvalAgent
 from orbit.agents.expense_agent.expense_agent import ExpenseAgent
 from orbit.agents.idea_agent.idea_agent import IdeaAgent
 from orbit.agents.learning_tracker.learning_tracker_agent import LearningTrackerAgent
+from orbit.agents.leetcode_agent.leetcode_agent import LeetCodeAgent
 from orbit.agents.memory_agent.memory_agent import MemoryAgent
+from orbit.agents.project_tracker.project_tracker import ProjectTracker
 from orbit.agents.resume_agent.resume_agent import ResumeAgent
 from orbit.types.shared import AgentName
 
@@ -54,6 +56,16 @@ def run_eval(state: OrbitState) -> OrbitState:
 @trace_orbit
 def run_idea(state: OrbitState) -> OrbitState:
     return {**state, "result": IdeaAgent().run(state["request"])}
+
+
+@trace_orbit
+def run_leetcode(state: OrbitState) -> OrbitState:
+    return {**state, "result": LeetCodeAgent().run(state["request"])}
+
+
+@trace_orbit
+def run_project_tracker(state: OrbitState) -> OrbitState:
+    return {**state, "result": ProjectTracker().run(state["request"])}
 
 
 def detect_agents(request: str) -> list[AgentName]:
@@ -145,6 +157,10 @@ def run_multi(state: OrbitState) -> OrbitState:
             results.append(EvalAgent().run(state["request"]))
         elif agent == AgentName.IDEA:
             results.append(IdeaAgent().run(state["request"]))
+        elif agent == AgentName.LEETCODE:
+            results.append(LeetCodeAgent().run(state["request"]))
+        elif agent == AgentName.PROJECT_TRACKER:
+            results.append(ProjectTracker().run(state["request"]))
     return {**state, "result": "\n".join(results)}
 
 
@@ -164,6 +180,8 @@ def build_orbit_graph() -> StateGraph[OrbitState]:
     graph.add_node(AgentName.COST, run_cost)
     graph.add_node(AgentName.EVAL, run_eval)
     graph.add_node(AgentName.IDEA, run_idea)
+    graph.add_node(AgentName.LEETCODE, run_leetcode)
+    graph.add_node(AgentName.PROJECT_TRACKER, run_project_tracker)
     graph.add_node(AgentName.MULTI, run_multi)
     graph.add_node(AgentName.AUTO, route_to_agent)
     graph.add_conditional_edges(START, route_to_agent)

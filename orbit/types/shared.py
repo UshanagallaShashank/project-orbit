@@ -10,6 +10,8 @@ class AgentName(StrEnum):
     COST = "cost"
     EVAL = "eval"
     IDEA = "idea"
+    LEETCODE = "leetcode"
+    PROJECT_TRACKER = "project_tracker"
     MULTI = "multi"
     AUTO = "auto"
 
