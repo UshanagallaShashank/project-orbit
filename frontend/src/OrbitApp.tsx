@@ -1,5 +1,4 @@
-import { useState, type ComponentType, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, type ComponentType } from 'react';
 import { BackendStatus } from './BackendStatus';
 import { TABS, TabBar, type TabName } from './TabBar';
 import { JobsTab } from './tabs/JobsTab';
@@ -21,46 +20,24 @@ const TAB_CONTENT: Record<TabName, ComponentType> = {
 export function OrbitApp() {
   const [active, setActive] = useState<TabName>('Today');
 
-  useEffect(() => {
-    const root = document.documentElement;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const t = stored || (prefersDark ? 'dark' : 'light');
-    root.setAttribute('data-theme', t);
-  }, []);
-
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
-        <div className="flex items-center justify-between px-8 py-4 max-w-7xl mx-auto w-full">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Orbit
-            </h1>
-          </motion.div>
+    <div className="min-h-screen bg-white dark:bg-slate-950">
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Orbit</h1>
           <BackendStatus />
         </div>
       </header>
 
       <TabBar active={active} onSelect={setActive} />
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-8">
         {TABS.map((name) => {
           const Tab = TAB_CONTENT[name];
           return (
-            <motion.div
-              key={name}
-              initial={name !== active ? { opacity: 0, y: 10 } : { opacity: 1, y: 0 }}
-              animate={name === active ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-              transition={{ duration: 0.15 }}
-              className={name === active ? 'block' : 'hidden'}
-            >
+            <div key={name} className={name === active ? 'block' : 'hidden'}>
               <Tab />
-            </motion.div>
+            </div>
           );
         })}
       </main>
