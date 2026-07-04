@@ -1,9 +1,9 @@
-// Recent expenses list with amount, category, note, and date
+// Recent expenses list with amount, category, note, date, and a delete action
 import type { Expense } from "./useExpenses";
 
-type ExpenseListProps = { expenses: Expense[] };
+type ExpenseListProps = { expenses: Expense[]; onDelete: (id: number) => void };
 
-export function ExpenseList({ expenses }: ExpenseListProps) {
+export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
   return (
     <div className="overflow-hidden rounded-xl border border-neutral-800">
       {expenses.map((expense) => (
@@ -23,9 +23,17 @@ export function ExpenseList({ expenses }: ExpenseListProps) {
               })}
             </span>
           </div>
-          <span className="text-sm font-medium text-red-400">
-            -{expense.amount.toLocaleString("en-IN")} INR
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-red-400">
+              -{expense.amount.toLocaleString("en-IN")} INR
+            </span>
+            <button
+              onClick={() => onDelete(expense.id)}
+              className="rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-red-950 hover:text-red-400"
+            >
+              Delete
+            </button>
+          </div>
         </div>
       ))}
     </div>

@@ -7,6 +7,8 @@ class AgentName(StrEnum):
     EXPENSE = "expense"
     RESUME = "resume"
     MEMORY = "memory"
+    MULTI = "multi"
+    AUTO = "auto"
 
 
 class ModelRole(StrEnum):

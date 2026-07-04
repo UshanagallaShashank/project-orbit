@@ -1,4 +1,5 @@
 # Tests that the expense parser turns model JSON output into a clean dict
+import json
 import pytest
 
 from orbit.agents.expense_agent import expense_parser
@@ -21,3 +22,12 @@ def test_parses_json_wrapped_in_code_fence(monkeypatch: pytest.MonkeyPatch) -> N
     parsed = expense_parser.parse_expense("90 for auto")
     assert parsed["amount"] == 90
     assert parsed["category"] == "transport"
+
+
+def test_returns_fallback_for_invalid_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    answer = "sorry, I failed"
+    monkeypatch.setattr(
+        expense_parser.ModelRouter, "ask", lambda self, role, prompt: ("gemini", answer)
+    )
+    parsed = expense_parser.parse_expense("spent 250 on lunch")
+    assert parsed == {"amount": 0, "category": "other", "note": ""}

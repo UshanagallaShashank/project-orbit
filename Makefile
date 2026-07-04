@@ -22,7 +22,7 @@ frontend:
 	cd frontend && npm run dev
 
 test:
-	$(VENV)/python -m pytest tests/ -v
+	PYTHONPATH=. $(VENV)/python -m pytest tests/ -v
 
 build:
 	cd frontend && npm run build

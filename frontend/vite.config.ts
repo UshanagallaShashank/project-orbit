@@ -27,6 +27,9 @@ export default defineConfig({
       "/agents": "http://localhost:8000",
       "/models": "http://localhost:8000",
       "/expenses": "http://localhost:8000",
+      "/learning": "http://localhost:8000",
+      "/resume": "http://localhost:8000",
+      "/memories": "http://localhost:8000",
     },
   },
 });

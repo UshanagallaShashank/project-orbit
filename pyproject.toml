@@ -9,6 +9,8 @@ dependencies = [
     "uvicorn>=0.34",
     "langgraph>=0.4",
     "langchain>=0.3",
+    "langchain-xai>=0.0",
+    "langchain-google-genai>=0.0",
     "supabase>=2.15",
     "python-dotenv>=1.1",
     "httpx>=0.28",
@@ -26,3 +28,7 @@ strict = true
 
 [tool.ruff]
 line-length = 100
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
