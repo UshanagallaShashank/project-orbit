@@ -3,6 +3,7 @@ from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
+from orbit.core.delegation import run_delegated
 from orbit.core.llm_client import invoke_prompt, trace_orbit
 
 from orbit.agents.comms_agent.comms_agent import CommsAgent
@@ -19,6 +20,7 @@ from orbit.agents.task_agent.task_agent import TaskAgent
 from orbit.agents.feature_agent.feature_agent import FeatureAgent
 from orbit.agents.job_agent.job_agent import JobAgent
 from orbit.agents.prompt_lab.prompt_lab import PromptLab
+from orbit.agents.qa_agent.qa_agent import QAAgent
 from orbit.agents.sandbox_agent.sandbox_agent import SandboxAgent
 from orbit.types.shared import AgentName
 
@@ -27,6 +29,8 @@ class OrbitState(TypedDict):
     request: str
     agent_name: AgentName
     result: str
+    run_id: int | None
+    on_step: object | None
 
 
 @trace_orbit
@@ -82,6 +86,23 @@ def run_task(state: OrbitState) -> OrbitState:
 @trace_orbit
 def run_comms(state: OrbitState) -> OrbitState:
     return {**state, "result": CommsAgent().run(state["request"])}
+
+
+@trace_orbit
+def run_qa(state: OrbitState) -> OrbitState:
+    return {**state, "result": QAAgent().run(state["request"], state.get("run_id"))}
+
+
+@trace_orbit
+def run_job(state: OrbitState) -> OrbitState:
+    return {**state, "result": JobAgent().run(state["request"])}
+
+
+@trace_orbit
+def run_delegate(state: OrbitState) -> OrbitState:
+    on_step = state.get("on_step")
+    result = run_delegated(state["request"], on_step=on_step)
+    return {**state, "result": result}
 
 
 def detect_agents(request: str) -> list[AgentName]:
@@ -187,7 +208,7 @@ def run_multi(state: OrbitState) -> OrbitState:
 @trace_orbit
 def route_to_agent(state: OrbitState) -> str:
     if state["agent_name"] == AgentName.AUTO:
-        return choose_agent(state["request"])
+        return AgentName.DELEGATE
     return state["agent_name"]
 
 
@@ -204,7 +225,10 @@ def build_orbit_graph() -> StateGraph[OrbitState]:
     graph.add_node(AgentName.PROJECT_TRACKER, run_project_tracker)
     graph.add_node(AgentName.TASK, run_task)
     graph.add_node(AgentName.COMMS, run_comms)
+    graph.add_node(AgentName.QA, run_qa)
+    graph.add_node(AgentName.JOB, run_job)
     graph.add_node(AgentName.MULTI, run_multi)
+    graph.add_node(AgentName.DELEGATE, run_delegate)
     graph.add_node(AgentName.AUTO, route_to_agent)
     graph.add_conditional_edges(START, route_to_agent)
     for name in AgentName:

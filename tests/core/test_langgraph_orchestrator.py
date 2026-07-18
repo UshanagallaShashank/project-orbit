@@ -7,12 +7,11 @@ def test_choose_agent_uses_llm_response(monkeypatch):
     assert langgraph_orchestrator.choose_agent("Please log this purchase") == AgentName.EXPENSE
 
 
-def test_route_to_agent_auto_selects_agent(monkeypatch):
-    monkeypatch.setattr(langgraph_orchestrator, "invoke_prompt", lambda model, prompt: "memory")
+def test_route_to_agent_auto_always_delegates(monkeypatch):
     result = langgraph_orchestrator.route_to_agent(
         {"request": "Remember this note", "agent_name": AgentName.AUTO, "result": ""}
     )
-    assert result == AgentName.MEMORY
+    assert result == AgentName.DELEGATE
 
 
 def test_choose_agent_returns_multi_for_multi_intent(monkeypatch):

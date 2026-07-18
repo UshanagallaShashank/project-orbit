@@ -30,6 +30,7 @@ export default defineConfig({
       "/learning": "http://localhost:8000",
       "/resume": "http://localhost:8000",
       "/memories": "http://localhost:8000",
+      "/features": "http://localhost:8000",
     },
   },
 });

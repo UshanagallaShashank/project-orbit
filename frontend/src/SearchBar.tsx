@@ -10,12 +10,13 @@ export function SearchBar({ placeholder, onSearch, children }: SearchBarProps) {
     return () => clearTimeout(timer);
   }, [query, onSearch]);
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-neutral-800 p-3">
+    <div className="flex flex-wrap items-center gap-2 rounded-2xl border p-3" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
       <input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         placeholder={placeholder}
-        className="min-w-48 grow rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+        className="min-w-48 grow rounded-lg border px-3 py-2 text-sm"
+        style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' }}
       />
       {children}
     </div>

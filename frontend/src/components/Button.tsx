@@ -1,6 +1,7 @@
-import { ReactNode, ButtonHTMLAttributes } from 'react';
+import { ReactNode, ButtonHTMLAttributes, CSSProperties } from 'react';
+import { motion } from 'framer-motion';
 
-type Variant = 'default' | 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
+type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,45 +11,56 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
 }
 
+function variantStyle(variant: Variant, disabled: boolean): CSSProperties {
+  const base: CSSProperties = { opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer' };
+  switch (variant) {
+    case 'primary':
+      return { ...base, background: 'var(--color-signal)', color: 'var(--color-void, #08090d)' };
+    case 'secondary':
+      return { ...base, background: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' };
+    case 'outline':
+      return { ...base, background: 'transparent', border: '1px solid var(--color-border)', color: 'var(--color-text-primary)' };
+    case 'ghost':
+      return { ...base, background: 'transparent', color: 'var(--color-text-secondary)' };
+    case 'danger':
+      return { ...base, background: 'var(--color-danger)', color: '#fff' };
+  }
+}
+
+const sizeStyles: Record<Size, string> = {
+  sm: 'px-3 py-1.5 text-sm font-medium rounded-lg',
+  md: 'px-4 py-2 text-sm font-medium rounded-lg',
+  lg: 'px-6 py-3 text-base font-medium rounded-lg',
+};
+
 export function Button({
-  variant = 'default',
+  variant = 'primary',
   size = 'md',
   isLoading,
-  className = '',
+  className,
   disabled,
   children,
+  style,
   ...props
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
-
-  const variantStyles = {
-    default: 'bg-gray-100 text-gray-900 hover:bg-gray-200',
-    primary: 'bg-green-600 text-white hover:bg-green-700',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300',
-    ghost: 'hover:bg-gray-100 text-gray-700',
-    danger: 'bg-red-600 text-white hover:bg-red-700',
-    outline: 'border border-gray-300 text-gray-900 hover:bg-gray-50',
-  };
-
-  const sizeStyles = {
-    sm: 'px-3 py-1.5 text-xs gap-1',
-    md: 'px-4 py-2 text-sm gap-2',
-    lg: 'px-6 py-2.5 text-base gap-2',
-  };
-
+  const isDisabled = Boolean(isLoading || disabled);
   return (
-    <button
-      className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
-      disabled={isLoading || disabled}
-      {...props}
+    <motion.button
+      className={`${sizeStyles[size]} inline-flex items-center gap-2 transition-all ${className || ''}`}
+      style={{ ...variantStyle(variant, isDisabled), ...style }}
+      disabled={isDisabled}
+      whileHover={{ scale: isDisabled ? 1 : 1.02 } as any}
+      whileTap={{ scale: isDisabled ? 1 : 0.98 } as any}
+      {...(props as any)}
     >
       {isLoading && (
-        <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
+        <motion.div
+          className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        />
       )}
       {children}
-    </button>
+    </motion.button>
   );
 }

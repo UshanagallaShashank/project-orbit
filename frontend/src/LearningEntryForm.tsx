@@ -24,37 +24,42 @@ export function LearningEntryForm({ onSaved }: LearningEntryFormProps) {
     onSaved();
   };
 
+  const fieldStyle = { borderColor: 'var(--color-border)', background: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' };
+  const labelStyle = { color: 'var(--color-text-tertiary)' };
+
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-800 p-4">
-      <label className="flex flex-col gap-1 text-xs text-neutral-400">
+    <form
+      onSubmit={submit}
+      className="flex flex-wrap items-end gap-3 rounded-2xl border p-4"
+      style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
+    >
+      <label className="flex flex-col gap-1 text-xs" style={labelStyle}>
         Track
-        <select
-          value={track}
-          onChange={(event) => setTrack(event.target.value)}
-          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
-        >
+        <select value={track} onChange={(event) => setTrack(event.target.value)} className="rounded-lg border px-3 py-2 text-sm" style={fieldStyle}>
           {TRACKS.map((name) => (
             <option key={name} value={name}>
-              {name.replace("_", " ")}
+              {name.replace('_', ' ')}
             </option>
           ))}
         </select>
       </label>
-      <label className="flex grow flex-col gap-1 text-xs text-neutral-400">
+      <label className="flex grow flex-col gap-1 text-xs" style={labelStyle}>
         Topic
         <input
           value={topic}
           onChange={(event) => setTopic(event.target.value)}
-          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+          className="rounded-lg border px-3 py-2 text-sm"
+          style={fieldStyle}
           placeholder="binary search trees"
         />
       </label>
       <button
         type="submit"
         disabled={saving}
-        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50"
+        className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+        style={{ background: 'var(--color-signal)', color: 'var(--color-void, #08090d)' }}
       >
-        {saving ? "Saving..." : "Log topic"}
+        {saving ? 'Saving...' : 'Log topic'}
       </button>
     </form>
   );

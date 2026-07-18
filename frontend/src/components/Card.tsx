@@ -1,4 +1,5 @@
 import { ReactNode, HTMLAttributes } from 'react';
+import { motion } from 'framer-motion';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
@@ -6,17 +7,26 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
   noBorder?: boolean;
 }
 
-export function Card({ children, hoverable, noBorder, className = '', ...props }: CardProps) {
+export function Card({
+  children,
+  hoverable = false,
+  noBorder = false,
+  className = '',
+  style,
+  ...props
+}: CardProps) {
   return (
-    <div
-      className={`${
-        noBorder
-          ? 'bg-transparent'
-          : 'bg-white border border-gray-200 rounded p-4'
-      } ${hoverable ? 'hover:shadow-sm cursor-pointer transition-shadow' : ''} ${className}`}
-      {...props}
+    <motion.div
+      className={`rounded-2xl p-5 transition-all ${hoverable ? 'cursor-pointer hover:-translate-y-0.5' : ''} ${className}`}
+      style={{
+        background: noBorder ? 'transparent' : 'var(--color-surface)',
+        border: noBorder ? 'none' : '1px solid var(--color-border)',
+        ...style,
+      }}
+      whileHover={hoverable ? { y: -2 } : undefined}
+      {...(props as any)}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

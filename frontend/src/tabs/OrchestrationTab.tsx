@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
+import { Badge } from '../components/Badge';
+import { AlertCircle, CheckCircle, Zap } from 'lucide-react';
 
 type RunEntry = {
   agent_name: string;
@@ -60,96 +63,133 @@ export function OrchestrationTab() {
   };
 
   return (
-    <div className="space-y-8">
+    <motion.div className="space-y-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Orchestrator</h2>
-        <p className="text-gray-600">Run agents directly and inspect results in real-time</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Orchestrator</h2>
+        <p className="text-slate-600 dark:text-slate-400">Run agents directly and inspect results in real-time</p>
       </div>
 
-      <Card>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Run an agent</h3>
-        <form className="flex flex-col gap-4" onSubmit={onSubmit}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Select Agent</label>
-            <select
-              value={agentName}
-              onChange={(e) => setAgentName(e.target.value as typeof AGENT_OPTIONS[number]['value'])}
-              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900"
-            >
-              {AGENT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Request</label>
-            <textarea
-              value={request}
-              onChange={(e) => setRequest(e.target.value)}
-              rows={4}
-              className="w-full rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400"
-              placeholder="Describe what you want Orbit to do..."
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button type="submit" variant="primary" disabled={isRunning || request.trim().length === 0} isLoading={isRunning}>
-              {isRunning ? 'Running...' : 'Run Agent'}
-            </Button>
-            <p className="text-xs text-gray-600">Uses the backend orchestrator with guardrails enabled</p>
-          </div>
-        </form>
-
-        {error && (
-          <div className="mt-4 rounded border border-red-200 bg-red-50 p-3">
-            <p className="text-sm font-medium text-red-800">Error</p>
-            <p className="text-sm text-red-700 mt-1">{error}</p>
-          </div>
-        )}
-        {result && !error && (
-          <div className="mt-4 rounded border border-green-200 bg-green-50 p-3">
-            <p className="text-sm font-medium text-green-800">Success</p>
-            <p className="text-sm text-green-700 mt-1 whitespace-pre-wrap">{result}</p>
-          </div>
-        )}
-      </Card>
-
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent runs</h3>
-        {runs.length === 0 ? (
-          <Card>
-            <div className="text-center py-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No runs yet</h3>
-              <p className="text-gray-600">Submit a request above to see the orchestrator in action</p>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Run an agent</h3>
+          <form className="flex flex-col gap-5" onSubmit={onSubmit}>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Select Agent</label>
+              <select
+                value={agentName}
+                onChange={(e) => setAgentName(e.target.value as typeof AGENT_OPTIONS[number]['value'])}
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+              >
+                {AGENT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Request</label>
+              <textarea
+                value={request}
+                onChange={(e) => setRequest(e.target.value)}
+                rows={4}
+                className="rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-violet-500 focus:outline-none"
+                placeholder="Describe what you want Orbit to do..."
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button
+                type="submit"
+                variant="primary"
+                size="md"
+                disabled={isRunning || request.trim().length === 0}
+                isLoading={isRunning}
+              >
+                {isRunning ? 'Running...' : 'Run Agent'}
+              </Button>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Uses the backend orchestrator with guardrails enabled
+              </p>
+            </div>
+          </form>
+
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                className="mt-4 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-4 flex gap-3"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <AlertCircle className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" size={18} />
+                <div>
+                  <p className="text-sm font-medium text-red-800 dark:text-red-200">Error</p>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
+                </div>
+              </motion.div>
+            )}
+            {result && !error && (
+              <motion.div
+                className="mt-4 rounded-lg border border-violet-200 dark:border-violet-900 bg-violet-50 dark:bg-violet-900/20 p-4 flex gap-3"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                <CheckCircle className="text-violet-600 dark:text-violet-400 flex-shrink-0 mt-0.5" size={18} />
+                <div>
+                  <p className="text-sm font-medium text-violet-800 dark:text-violet-200">Success</p>
+                  <p className="text-sm text-violet-700 dark:text-violet-300 mt-1 whitespace-pre-wrap">{result}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </Card>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Recent runs</h3>
+        {runs.length === 0 ? (
+          <Card className="border-2 border-dashed border-slate-300 dark:border-slate-700 p-8 text-center">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
+              <Zap className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">No runs yet</h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              Submit a request above to see the orchestrator in action
+            </p>
           </Card>
         ) : (
           <div className="space-y-3">
-            {runs.map((run) => (
-              <Card key={`${run.timestamp}-${run.request}`}>
-                <div className="flex items-start justify-between gap-4 mb-2">
-                  <div className="flex-1 min-w-0">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">
-                      {run.agent_name.replace(/_/g, ' ')}
-                    </span>
-                    <p className="text-sm text-gray-700 mt-2">{run.request}</p>
-                  </div>
-                  <span className="text-xs text-gray-500 whitespace-nowrap">{run.timestamp}</span>
-                </div>
-                <p className="text-sm text-gray-600 font-mono">{run.result}</p>
-              </Card>
-            ))}
+            <AnimatePresence>
+              {runs.map((run, index) => (
+                <motion.div
+                  key={`${run.timestamp}-${run.request}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Card className="p-4">
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <Badge variant="info" size="sm">
+                          {run.agent_name.replace(/_/g, ' ')}
+                        </Badge>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 mt-2">{run.request}</p>
+                      </div>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                        {run.timestamp}
+                      </span>
+                    </div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-mono">{run.result}</p>
+                  </Card>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

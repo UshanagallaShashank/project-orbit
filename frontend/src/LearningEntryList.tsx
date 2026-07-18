@@ -2,9 +2,9 @@
 import type { LearningEntry } from "./useLearningEntries";
 
 const STATUS_TONE: Record<string, string> = {
-  not_started: "text-neutral-500",
-  in_progress: "text-yellow-400",
-  done: "text-green-400",
+  not_started: 'var(--color-text-tertiary)',
+  in_progress: 'var(--color-warning)',
+  done: 'var(--color-signal)',
 };
 
 type LearningEntryListProps = {
@@ -15,21 +15,27 @@ type LearningEntryListProps = {
 
 export function LearningEntryList({ entries, onStatusChange, onDelete }: LearningEntryListProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-neutral-800">
+    <div className="overflow-hidden rounded-2xl border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
       {entries.map((entry) => (
         <div
           key={entry.id}
-          className="flex items-center justify-between border-b border-neutral-800 px-4 py-3 last:border-b-0"
+          className="flex items-center justify-between border-b px-4 py-3 last:border-b-0"
+          style={{ borderColor: 'var(--color-border)' }}
         >
           <div className="flex flex-col">
-            <span className="text-sm text-neutral-200">{entry.topic.length > 50 ? entry.topic.substring(0, 50) + "..." : entry.topic}</span>
-            <span className="text-xs capitalize text-neutral-500">{entry.track.replace("_", " ")}</span>
+            <span className="text-sm" style={{ color: 'var(--color-text-primary)' }}>
+              {entry.topic.length > 50 ? entry.topic.substring(0, 50) + '...' : entry.topic}
+            </span>
+            <span className="text-xs capitalize" style={{ color: 'var(--color-text-tertiary)' }}>
+              {entry.track.replace('_', ' ')}
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <select
               value={entry.status}
               onChange={(event) => onStatusChange(entry, event.target.value)}
-              className={`rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-xs ${STATUS_TONE[entry.status]}`}
+              className="rounded-lg border px-2 py-1 text-xs"
+              style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface-raised)', color: STATUS_TONE[entry.status] }}
             >
               <option value="not_started">Not started</option>
               <option value="in_progress">In progress</option>
@@ -37,7 +43,8 @@ export function LearningEntryList({ entries, onStatusChange, onDelete }: Learnin
             </select>
             <button
               onClick={() => onDelete(entry.id)}
-              className="rounded-md px-2 py-1 text-xs text-neutral-500 hover:bg-red-950 hover:text-red-400"
+              className="rounded-lg px-2 py-1 text-xs"
+              style={{ color: 'var(--color-text-tertiary)' }}
             >
               Delete
             </button>

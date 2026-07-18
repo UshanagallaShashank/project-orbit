@@ -22,7 +22,7 @@ const statusConfig = {
   },
   success: {
     icon: CheckCircle,
-    color: 'text-green-500',
+    color: 'text-violet-500',
     label: 'Success',
   },
   error: {

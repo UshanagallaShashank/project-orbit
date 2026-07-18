@@ -14,7 +14,10 @@ class AgentName(StrEnum):
     PROJECT_TRACKER = "project_tracker"
     TASK = "task"
     COMMS = "comms"
+    QA = "qa"
+    JOB = "job"
     MULTI = "multi"
+    DELEGATE = "delegate"
     AUTO = "auto"
 
 

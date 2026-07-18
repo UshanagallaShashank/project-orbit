@@ -11,17 +11,21 @@ export function CategoryBreakdown({ expenses }: CategoryBreakdownProps) {
   const entries = [...totals.entries()].sort((first, second) => second[1] - first[1]);
   const largest = entries[0]?.[1] ?? 1;
   return (
-    <section className="rounded-xl border border-neutral-800 p-5">
-      <h2 className="text-sm font-semibold text-neutral-200">Where the money went</h2>
+    <section className="rounded-2xl border p-5" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
+      <h2 className="text-sm font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+        Where the money went
+      </h2>
       <div className="mt-4 flex flex-col gap-3">
         {entries.map(([category, total]) => (
           <div key={category} className="flex items-center gap-3">
-            <span className="w-28 shrink-0 text-xs capitalize text-neutral-400">{category}</span>
-            <div className="h-2 grow overflow-hidden rounded-full bg-neutral-800">
-              <div className="h-full rounded-full bg-green-600" style={{ width: `${(total / largest) * 100}%` }} />
+            <span className="w-28 shrink-0 text-xs capitalize" style={{ color: 'var(--color-text-secondary)' }}>
+              {category}
+            </span>
+            <div className="h-2 grow overflow-hidden rounded-full" style={{ background: 'var(--color-surface-raised)' }}>
+              <div className="h-full rounded-full" style={{ width: `${(total / largest) * 100}%`, background: 'var(--color-signal)' }} />
             </div>
-            <span className="w-24 shrink-0 text-right text-xs text-neutral-300">
-              {total.toLocaleString("en-IN")} INR
+            <span className="w-24 shrink-0 text-right text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {total.toLocaleString('en-IN')} INR
             </span>
           </div>
         ))}

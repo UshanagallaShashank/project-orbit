@@ -29,26 +29,35 @@ export function ExpenseForm({ onSaved, knownCategories }: ExpenseFormProps) {
     onSaved();
   };
 
+  const fieldStyle = { borderColor: 'var(--color-border)', background: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' };
+  const labelStyle = { color: 'var(--color-text-tertiary)' };
+
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-end gap-3 rounded-xl border border-neutral-800 p-4">
-      <label className="flex flex-col gap-1 text-xs text-neutral-400">
+    <form
+      onSubmit={submit}
+      className="flex flex-wrap items-end gap-3 rounded-2xl border p-4"
+      style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
+    >
+      <label className="flex flex-col gap-1 text-xs" style={labelStyle}>
         Amount (INR)
         <input
           type="number"
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
-          className="w-32 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+          className="w-32 rounded-lg border px-3 py-2 text-sm"
+          style={fieldStyle}
           placeholder="250"
           required
         />
       </label>
-      <label className="flex flex-col gap-1 text-xs text-neutral-400">
+      <label className="flex flex-col gap-1 text-xs" style={labelStyle}>
         Category (pick or type a new one)
         <input
           list="category-options"
           value={category}
           onChange={(event) => setCategory(event.target.value)}
-          className="w-52 rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+          className="w-52 rounded-lg border px-3 py-2 text-sm"
+          style={fieldStyle}
           placeholder="food, ai tools, anything"
         />
       </label>
@@ -57,21 +66,23 @@ export function ExpenseForm({ onSaved, knownCategories }: ExpenseFormProps) {
           <option key={name} value={name} />
         ))}
       </datalist>
-      <label className="flex grow flex-col gap-1 text-xs text-neutral-400">
+      <label className="flex grow flex-col gap-1 text-xs" style={labelStyle}>
         Note
         <input
           value={note}
           onChange={(event) => setNote(event.target.value)}
-          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+          className="rounded-lg border px-3 py-2 text-sm"
+          style={fieldStyle}
           placeholder="lunch at the mess"
         />
       </label>
       <button
         type="submit"
         disabled={saving}
-        className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50"
+        className="rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+        style={{ background: 'var(--color-signal)', color: 'var(--color-void, #08090d)' }}
       >
-        {saving ? "Saving..." : "Add expense"}
+        {saving ? 'Saving...' : 'Add expense'}
       </button>
     </form>
   );

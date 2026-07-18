@@ -23,33 +23,43 @@ export function ResumeVersionForm({ onSaved }: ResumeVersionFormProps) {
     onSaved();
   };
 
+  const fieldStyle = { borderColor: 'var(--color-border)', background: 'var(--color-surface-raised)', color: 'var(--color-text-primary)' };
+  const labelStyle = { color: 'var(--color-text-tertiary)' };
+
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3 rounded-xl border border-neutral-800 p-4">
-      <label className="flex flex-col gap-1 text-xs text-neutral-400">
+    <form
+      onSubmit={submit}
+      className="flex flex-col gap-3 rounded-2xl border p-4"
+      style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}
+    >
+      <label className="flex flex-col gap-1 text-xs" style={labelStyle}>
         Version label
         <input
           value={label}
           onChange={(event) => setLabel(event.target.value)}
-          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+          className="rounded-lg border px-3 py-2 text-sm"
+          style={fieldStyle}
           placeholder="v3 - SDE roles"
         />
       </label>
-      <label className="flex flex-col gap-1 text-xs text-neutral-400">
+      <label className="flex flex-col gap-1 text-xs" style={labelStyle}>
         Content
         <textarea
           value={content}
           onChange={(event) => setContent(event.target.value)}
           rows={6}
-          className="rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-white"
+          className="rounded-lg border px-3 py-2 text-sm"
+          style={fieldStyle}
           placeholder="Paste the resume text for this version..."
         />
       </label>
       <button
         type="submit"
         disabled={saving}
-        className="self-start rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-500 disabled:opacity-50"
+        className="self-start rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+        style={{ background: 'var(--color-signal)', color: 'var(--color-void, #08090d)' }}
       >
-        {saving ? "Saving..." : "Save version"}
+        {saving ? 'Saving...' : 'Save version'}
       </button>
     </form>
   );
